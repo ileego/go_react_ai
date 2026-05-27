@@ -1,0 +1,30 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-json
+
+  - repo: local
+    hooks:
+      - id: gofmt
+        name: gofmt
+        entry: bash -c 'cd src/backend && gofmt -w .'
+        language: system
+        files: '\.go$'
+
+      - id: go-vet
+        name: go vet
+        entry: bash -c 'cd src/backend && go vet ./...'
+        language: system
+        files: '\.go$'
+        pass_filenames: false
+
+      - id: go-test
+        name: go test
+        entry: bash -c 'cd src/backend && go test ./...'
+        language: system
+        files: '\.go$'
+        pass_filenames: false
