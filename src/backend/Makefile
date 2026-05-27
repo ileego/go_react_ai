@@ -1,19 +1,21 @@
-.PHONY: help env up down restart logs ps backend frontend test migrate
+.PHONY: help env up down restart logs ps build run test migrate migrate-new install lint
 
 # 默认显示帮助
 help:
-	@echo "可用命令:"
-	@echo "  make env       - 生成 .env 文件（从模板）"
-	@echo "  make up        - 启动所有基础设施 (Docker Compose)"
-	@echo "  make down      - 停止所有基础设施"
-	@echo "  make restart   - 重启基础设施"
-	@echo "  make logs      - 查看基础设施日志"
-	@echo "  make ps        - 查看运行状态"
-	@echo "  make backend   - 运行后端开发服务器"
-	@echo "  make frontend  - 运行前端开发服务器"
-	@echo "  make test      - 运行后端测试"
-	@echo "  make migrate   - 执行数据库迁移"
-	@echo "  make install   - 安装前后端依赖"
+	@echo "后端可用命令:"
+	@echo "  make env          - 生成 .env 文件（从模板）"
+	@echo "  make up           - 启动基础设施 (Docker Compose)"
+	@echo "  make down         - 停止基础设施"
+	@echo "  make restart      - 重启基础设施"
+	@echo "  make logs         - 查看基础设施日志"
+	@echo "  make ps           - 查看运行状态"
+	@echo "  make install      - 下载 Go 依赖"
+	@echo "  make build        - 编译后端二进制"
+	@echo "  make run          - 运行后端开发服务器"
+	@echo "  make test         - 运行测试"
+	@echo "  make lint         - 运行代码检查"
+	@echo "  make migrate      - 执行数据库迁移"
+	@echo "  make migrate-new  - 创建新的迁移文件"
 
 # 生成 .env 文件
 env:
@@ -45,19 +47,22 @@ ps:
 # 安装依赖
 install:
 	go mod download
-	cd ../frontend && pnpm install
+
+# 编译后端
+build:
+	go build -o bin/server.exe cmd/server/main.go
 
 # 运行后端
-backend:
+run:
 	go run cmd/server/main.go
-
-# 运行前端
-frontend:
-	cd ../frontend && pnpm dev
 
 # 运行测试
 test:
 	go test -v ./...
+
+# 代码检查
+lint:
+	golangci-lint run ./...
 
 # 数据库迁移（需要安装 golang-migrate）
 migrate:
