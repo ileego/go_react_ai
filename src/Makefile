@@ -1,19 +1,19 @@
-# 根目录聚合 Makefile
+# src 聚合 Makefile
 # 前后端构建完全分离，此处仅做命令转发
 
 .PHONY: help up down restart logs ps
 
 # 基础设施命令（转发到后端 Makefile）
 up down restart logs ps:
-	@$(MAKE) -C src/backend $@
+	@$(MAKE) -C backend $@
 
 # 后端命令转发: make backend-run / backend-test / backend-build ...
 backend-%:
-	@$(MAKE) -C src/backend $(subst backend-,,$@)
+	@$(MAKE) -C backend $(subst backend-,,$@)
 
 # 前端命令转发: make frontend-dev / frontend-build / frontend-install ...
 frontend-%:
-	@$(MAKE) -C src/frontend $(subst frontend-,,$@)
+	@$(MAKE) -C frontend $(subst frontend-,,$@)
 
 help:
 	@echo "用法: make [命令]"
