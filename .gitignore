@@ -23,6 +23,9 @@ frontend/dist/
 .DS_Store
 Thumbs.db
 
+# Claude Code
+.claude/
+
 # 测试覆盖
 coverage.out
 *.cover
