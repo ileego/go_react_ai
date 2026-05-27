@@ -1,9 +1,5 @@
-# 依赖
-src/backend/vendor/
-src/frontend/node_modules/
-
 # 编译产物
-src/backend/bin/
+bin/
 *.exe
 *.dll
 *.so
@@ -32,10 +28,3 @@ Thumbs.db
 
 # 日志
 *.log
-
-# Docker
-.docker/
-
-# 前端构建产物
-src/frontend/dist/
-src/frontend/dist-ssr/

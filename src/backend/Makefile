@@ -1,5 +1,12 @@
 .PHONY: help env up down restart logs ps build run test migrate migrate-new install lint
 
+# 跨平台可执行文件后缀
+ifeq ($(OS),Windows_NT)
+	EXE := .exe
+else
+	EXE :=
+endif
+
 # 默认显示帮助
 help:
 	@echo "后端可用命令:"
@@ -15,18 +22,22 @@ help:
 	@echo "  make test         - 运行测试"
 	@echo "  make lint         - 运行代码检查"
 	@echo "  make migrate      - 执行数据库迁移"
-	@echo "  make migrate-new  - 创建新的迁移文件"
+	@echo "  make migrate-new  - 创建新的迁移文件（用法: make migrate-new NAME=xxx）"
 
 # 生成 .env 文件
 env:
-	@if not exist .env (copy .env.example .env && echo "已生成 .env，请编辑填入你的配置")
-	@if exist .env (echo ".env 已存在，跳过")
+	@if [ -f .env ]; then \
+		echo ".env 已存在，跳过"; \
+	else \
+		cp .env.example .env; \
+		echo "已生成 .env，请编辑填入你的配置"; \
+	fi
 
 # 启动基础设施
 up:
 	docker compose up -d
 	@echo "等待服务就绪..."
-	@timeout /t 5 /nobreak >nul
+	@sleep 5
 	@docker compose ps
 
 # 停止基础设施
@@ -50,11 +61,11 @@ install:
 
 # 编译后端
 build:
-	go build -o bin/server.exe cmd/server/main.go
+	go build -o bin/server$(EXE) ./cmd/server/main.go
 
 # 运行后端
 run:
-	go run cmd/server/main.go
+	go run ./cmd/server/main.go
 
 # 运行测试
 test:
@@ -71,5 +82,8 @@ migrate:
 
 # 创建新的迁移文件
 migrate-new:
-	@read -p "迁移名称: " name; \
-	migrate create -ext sql -dir internal/repository/migrations $$name
+	@if [ -z "$(NAME)" ]; then \
+		echo "用法: make migrate-new NAME=xxx"; \
+		exit 1; \
+	fi
+	migrate create -ext sql -dir internal/repository/migrations $(NAME)
