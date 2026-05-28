@@ -26,6 +26,17 @@ type Report struct {
 	CompletedAt *time.Time
 }
 
+// Validate 校验报告字段
+func (r *Report) Validate() error {
+	if r.Title == "" {
+		return NewValidationError("title", "标题不能为空")
+	}
+	if r.Topic == "" {
+		return NewValidationError("topic", "主题不能为空")
+	}
+	return nil
+}
+
 // CanCancel 报告是否可以取消
 func (r *Report) CanCancel() bool {
 	return r.Status == ReportStatusPending || r.Status == ReportStatusRunning
