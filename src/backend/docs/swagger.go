@@ -1,4 +1,6 @@
-package handler
+// Package docs 提供 Swagger API 文档服务。
+// OpenAPI 规范文件放在此包中，通过 go:embed 嵌入到二进制。
+package docs
 
 import (
 	_ "embed"
@@ -7,22 +9,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed docs/openapi.yaml
+//go:embed openapi.yaml
 var openapiYAML []byte
 
-//go:embed docs/swagger-ui.html
+//go:embed swagger-ui.html
 var swaggerUIHTML []byte
 
-// SwaggerHandler Swagger 文档处理器
-type SwaggerHandler struct{}
-
-// NewSwaggerHandler 创建 SwaggerHandler
-func NewSwaggerHandler() *SwaggerHandler {
-	return &SwaggerHandler{}
-}
-
-// RegisterRoutes 注册 Swagger 相关路由
-func (h *SwaggerHandler) RegisterRoutes(r *gin.Engine) {
+// RegisterRoutes 注册 Swagger 文档路由到 Gin Engine
+func RegisterRoutes(r *gin.Engine) {
 	r.GET("/swagger", func(c *gin.Context) {
 		c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
 	})

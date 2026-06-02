@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/yourname/go_react_ai/internal/config"
+	"github.com/yourname/go_react_ai/docs"
 )
 
 func main() {
@@ -41,6 +42,9 @@ func main() {
 			"mode":   cfg.Server.Mode,
 		})
 	})
+
+	// Swagger API 文档
+	docs.RegisterRoutes(r)
 
 	addr := ":" + cfg.Server.Port
 	log.Printf("Server starting on %s (mode=%s)", addr, cfg.Server.Mode)
