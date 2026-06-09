@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourname/go_react_ai/internal/domain"
-	"github.com/yourname/go_react_ai/internal/service"
+	"github.com/ileego/go_react_ai/internal/domain"
+	"github.com/ileego/go_react_ai/internal/service"
 )
 
 // ReportHandler 报告相关 HTTP 接口

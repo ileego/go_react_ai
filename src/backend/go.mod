@@ -1,4 +1,4 @@
-module github.com/yourname/go_react_ai
+module github.com/ileego/go_react_ai
 
 go 1.26.3
 

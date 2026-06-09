@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourname/go_react_ai/internal/service"
+	"github.com/ileego/go_react_ai/internal/service"
 )
 
 // AgentHandler 智能体相关 HTTP 接口

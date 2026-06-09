@@ -5,7 +5,7 @@ package repository
 import (
 	"context"
 
-	"github.com/yourname/go_react_ai/internal/domain"
+	"github.com/ileego/go_react_ai/internal/domain"
 )
 
 // UserRepository 用户数据访问接口

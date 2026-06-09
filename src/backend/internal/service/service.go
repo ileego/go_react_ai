@@ -5,7 +5,7 @@ package service
 import (
 	"context"
 
-	"github.com/yourname/go_react_ai/internal/domain"
+	"github.com/ileego/go_react_ai/internal/domain"
 )
 
 // ReportService 报告业务逻辑接口

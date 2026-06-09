@@ -5,9 +5,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/yourname/go_react_ai/internal/domain"
-	"github.com/yourname/go_react_ai/internal/repository"
-	"github.com/yourname/go_react_ai/pkg/errors"
+	"github.com/ileego/go_react_ai/internal/domain"
+	"github.com/ileego/go_react_ai/internal/repository"
+	"github.com/ileego/go_react_ai/pkg/errors"
 )
 
 // reportService 实现 ReportService 接口

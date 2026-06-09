@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/yourname/go_react_ai/internal/domain"
+	"github.com/ileego/go_react_ai/internal/domain"
 )
 
 // ReportRepository 内存版报告数据访问实现

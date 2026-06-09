@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/yourname/go_react_ai/internal/config"
-	"github.com/yourname/go_react_ai/docs"
+	"github.com/ileego/go_react_ai/docs"
+	"github.com/ileego/go_react_ai/internal/config"
 )
 
 func main() {

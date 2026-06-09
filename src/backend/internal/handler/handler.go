@@ -5,7 +5,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/yourname/go_react_ai/internal/service"
+	"github.com/ileego/go_react_ai/internal/service"
 )
 
 // Handlers 汇总所有 HTTP 处理器，方便路由注册时统一注入依赖

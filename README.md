@@ -16,7 +16,7 @@
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/yourname/go_react_ai.git
+git clone https://github.com/ileego/go_react_ai.git
 cd go_react_ai/src
 
 # 2. 生成后端环境文件并编辑

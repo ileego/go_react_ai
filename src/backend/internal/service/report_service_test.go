@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/yourname/go_react_ai/internal/domain"
-	"github.com/yourname/go_react_ai/internal/repository/memory"
+	"github.com/ileego/go_react_ai/internal/domain"
+	"github.com/ileego/go_react_ai/internal/repository/memory"
 )
 
 // TestReportService_Create 测试创建报告
