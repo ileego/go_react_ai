@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ileego/go_react_ai/pkg/response"
 )
 
 // HealthHandler 健康检查处理器
@@ -16,8 +16,9 @@ func NewHealthHandler() *HealthHandler {
 }
 
 // Check 健康检查接口
+// GET /api/health
 func (h *HealthHandler) Check(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
+	response.Data(c, gin.H{
 		"status": "ok",
 		"time":   time.Now().Unix(),
 	})

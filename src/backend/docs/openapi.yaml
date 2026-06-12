@@ -131,17 +131,56 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /reports/{report_id}/dispatch:
+    post:
+      summary: 派发报告给智能体处理
+      operationId: dispatchReport
+      tags:
+        - Reports
+      parameters:
+        - name: report_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 派发成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: 参数错误
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: 报告不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthResponse:
       type: object
       properties:
-        status:
-          type: string
-          example: "ok"
-        time:
+        code:
           type: integer
-          format: int64
+          example: 0
+        data:
+          type: object
+          properties:
+            status:
+              type: string
+              example: "ok"
+            time:
+              type: integer
+              format: int64
 
     Report:
       type: object
@@ -184,7 +223,7 @@ components:
         topic:
           type: string
           minLength: 1
-          maxLength: 1000
+          maxLength: 500
           description: 研究主题
 
     ReportListResponse:

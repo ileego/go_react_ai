@@ -39,6 +39,7 @@ func (h *Handlers) RegisterRoutes(r *gin.Engine) {
 			reports.GET("", h.Report.List)
 			reports.GET("/:id", h.Report.Get)
 			reports.POST("/:id/cancel", h.Report.Cancel)
+			reports.POST("/:report_id/dispatch", h.Agent.Dispatch)
 		}
 	}
 }

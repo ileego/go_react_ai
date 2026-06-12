@@ -2,11 +2,16 @@ package main
 
 import (
 	"log"
-	"net/http"
+	"log/slog"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ileego/go_react_ai/docs"
 	"github.com/ileego/go_react_ai/internal/config"
+	"github.com/ileego/go_react_ai/internal/handler"
+	"github.com/ileego/go_react_ai/internal/middleware"
+	"github.com/ileego/go_react_ai/internal/repository/memory"
+	"github.com/ileego/go_react_ai/internal/service"
 )
 
 func main() {
@@ -16,32 +21,31 @@ func main() {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
+	// 初始化结构化日志
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+
+	// 依赖注入（目前使用内存实现，第7章替换为 PostgreSQL）
+	reportRepo := memory.NewReportRepository()
+	// TODO: taskRepo 在实现 AgentTaskRepository 内存版后注入
+	// taskRepo := memory.NewAgentTaskRepository()
+
+	reportSvc := service.NewReportService(reportRepo)
+	// TODO: agentSvc 在 taskRepo 就绪后注入真实实现
+	agentSvc := service.NewAgentService(reportRepo, nil)
+
+	handlers := handler.NewHandlers(reportSvc, agentSvc)
+
+	// 创建 Gin 引擎
 	r := gin.New()
-	r.Use(gin.Recovery())
 
-	if cfg.Server.Mode == "debug" {
-		r.Use(gin.Logger())
-	}
+	// 中间件顺序很重要：Recovery 必须在最外层，才能捕获后续中间件的 panic
+	r.Use(middleware.Recovery())
+	r.Use(middleware.RequestID())
+	r.Use(middleware.Logger())
+	r.Use(middleware.CORS(cfg.Server.AllowOrigins))
 
-	// CORS
-	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", cfg.Server.AllowOrigins)
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(http.StatusNoContent)
-			return
-		}
-		c.Next()
-	})
-
-	// 健康检查
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status": "ok",
-			"mode":   cfg.Server.Mode,
-		})
-	})
+	// 注册业务路由
+	handlers.RegisterRoutes(r)
 
 	// Swagger API 文档
 	docs.RegisterRoutes(r)

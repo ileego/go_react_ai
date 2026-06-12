@@ -1,11 +1,11 @@
 package handler
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ileego/go_react_ai/internal/service"
+	"github.com/ileego/go_react_ai/pkg/response"
 )
 
 // AgentHandler 智能体相关 HTTP 接口
@@ -19,17 +19,18 @@ func NewAgentHandler(svc service.AgentService) *AgentHandler {
 }
 
 // Dispatch 派发报告生成任务
+// POST /api/reports/:report_id/dispatch
 func (h *AgentHandler) Dispatch(c *gin.Context) {
 	reportID, err := strconv.ParseInt(c.Param("report_id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid report_id"})
+		response.BadRequest(c, "invalid report_id")
 		return
 	}
 
 	if err := h.svc.Dispatch(c.Request.Context(), reportID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.FromError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "dispatched"})
+	response.OK(c)
 }

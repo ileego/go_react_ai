@@ -1,12 +1,11 @@
 package handler
 
 import (
-	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/ileego/go_react_ai/internal/domain"
 	"github.com/ileego/go_react_ai/internal/service"
+	"github.com/ileego/go_react_ai/pkg/response"
 )
 
 // ReportHandler 报告相关 HTTP 接口
@@ -21,15 +20,16 @@ func NewReportHandler(svc service.ReportService) *ReportHandler {
 
 // CreateRequest 创建报告请求参数
 type CreateRequest struct {
-	Title string `json:"title" binding:"required"`
-	Topic string `json:"topic" binding:"required"`
+	Title string `json:"title" binding:"required,min=1,max=200"`
+	Topic string `json:"topic" binding:"required,min=1,max=500"`
 }
 
 // Create 创建报告
+// POST /api/reports
 func (h *ReportHandler) Create(c *gin.Context) {
 	var req CreateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		response.BadRequest(c, err.Error())
 		return
 	}
 
@@ -38,35 +38,33 @@ func (h *ReportHandler) Create(c *gin.Context) {
 
 	report, err := h.svc.Create(c.Request.Context(), userID, req.Title, req.Topic)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.FromError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, report)
+	response.Created(c, report)
 }
 
 // Get 获取报告详情
+// GET /api/reports/:id
 func (h *ReportHandler) Get(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.BadRequest(c, "invalid id")
 		return
 	}
 
 	report, err := h.svc.GetByID(c.Request.Context(), id)
 	if err != nil {
-		if _, ok := err.(*domain.NotFoundError); ok {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.FromError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, report)
+	response.Data(c, report)
 }
 
 // List 获取报告列表
+// GET /api/reports?page=1&page_size=20
 func (h *ReportHandler) List(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
@@ -76,30 +74,26 @@ func (h *ReportHandler) List(c *gin.Context) {
 
 	reports, total, err := h.svc.ListByUser(c.Request.Context(), userID, page, pageSize)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.FromError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"data":  reports,
-		"total": total,
-		"page":  page,
-		"size":  pageSize,
-	})
+	response.List(c, reports, total, page, pageSize)
 }
 
 // Cancel 取消报告
+// POST /api/reports/:id/cancel
 func (h *ReportHandler) Cancel(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		response.BadRequest(c, "invalid id")
 		return
 	}
 
 	if err := h.svc.Cancel(c.Request.Context(), id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		response.FromError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "cancelled"})
+	response.OK(c)
 }

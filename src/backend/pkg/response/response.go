@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ileego/go_react_ai/pkg/errors"
 )
 
 // Body 统一响应体
@@ -69,4 +70,27 @@ func NotFound(c *gin.Context, message string) {
 // InternalServerError 内部错误
 func InternalServerError(c *gin.Context, message string) {
 	Error(c, http.StatusInternalServerError, message)
+}
+
+// FromError 根据业务错误类型返回对应的 HTTP 响应
+// 如果是 pkg/errors.Error，按 Kind 映射状态码；否则统一返回 500
+func FromError(c *gin.Context, err error) {
+	if e, ok := err.(*errors.Error); ok {
+		switch e.Kind {
+		case errors.KindValidation:
+			Error(c, http.StatusBadRequest, e.Message)
+		case errors.KindNotFound:
+			Error(c, http.StatusNotFound, e.Message)
+		case errors.KindDuplicate:
+			Error(c, http.StatusConflict, e.Message)
+		case errors.KindUnauthorized:
+			Error(c, http.StatusUnauthorized, e.Message)
+		case errors.KindForbidden:
+			Error(c, http.StatusForbidden, e.Message)
+		default:
+			Error(c, http.StatusInternalServerError, e.Message)
+		}
+		return
+	}
+	InternalServerError(c, err.Error())
 }
