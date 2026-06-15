@@ -8,6 +8,22 @@ import (
 	"github.com/ileego/go_react_ai/internal/domain"
 )
 
+// AuthService 认证与授权业务逻辑接口
+type AuthService interface {
+	// Register 用户注册
+	Register(ctx context.Context, email, password, nickname string) (*domain.User, error)
+	// Login 用户登录，返回 access token 与 refresh token
+	Login(ctx context.Context, email, password string) (accessToken, refreshToken string, err error)
+	// Refresh 使用 refresh token 刷新令牌对
+	Refresh(ctx context.Context, refreshToken string) (accessToken, newRefreshToken string, err error)
+	// Logout 登出，将当前 access 与 refresh token 加入黑名单
+	Logout(ctx context.Context, accessToken, refreshToken string) error
+	// Me 获取当前用户信息
+	Me(ctx context.Context, userID int64) (*domain.User, error)
+	// GithubLogin 使用 GitHub OAuth2 code 登录或注册
+	GithubLogin(ctx context.Context, code string) (accessToken, refreshToken string, err error)
+}
+
 // ReportService 报告业务逻辑接口
 type ReportService interface {
 	// Create 创建新的研究报告

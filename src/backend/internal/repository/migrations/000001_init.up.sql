@@ -8,11 +8,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- 临时默认用户，第9章用户系统完成后移除
-INSERT INTO users (id, email, password_hash, nickname, role)
-VALUES (1, 'system@goai.local', 'notused', 'System', 'system')
-ON CONFLICT (id) DO NOTHING;
-
 CREATE TABLE IF NOT EXISTS reports (
     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(200) NOT NULL,

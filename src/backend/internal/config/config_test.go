@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestDatabaseConfig_DSN(t *testing.T) {
@@ -28,6 +29,8 @@ func TestLoad_Defaults(t *testing.T) {
 		"GOAI_DB_HOST", "GOAI_DB_PORT",
 		"GOAI_REDIS_HOST", "GOAI_REDIS_PORT",
 		"GOAI_AI_PROVIDER",
+		"GOAI_JWT_SECRET", "GOAI_ACCESS_TOKEN_TTL_MINUTES", "GOAI_REFRESH_TOKEN_TTL_DAYS",
+		"GOAI_GITHUB_CLIENT_ID", "GOAI_GITHUB_CLIENT_SECRET", "GOAI_GITHUB_REDIRECT_URL",
 	} {
 		os.Unsetenv(key)
 	}
@@ -54,6 +57,15 @@ func TestLoad_Defaults(t *testing.T) {
 	}
 	if cfg.AI.Provider != "openai" {
 		t.Errorf("default ai provider = %q, want openai", cfg.AI.Provider)
+	}
+	if cfg.Auth.JWTSecret != "change-me-in-production" {
+		t.Errorf("default jwt secret = %q, want change-me-in-production", cfg.Auth.JWTSecret)
+	}
+	if cfg.Auth.AccessTokenTTL() != 15*time.Minute {
+		t.Errorf("default access token ttl = %v, want 15m", cfg.Auth.AccessTokenTTL())
+	}
+	if cfg.Auth.RefreshTokenTTL() != 7*24*time.Hour {
+		t.Errorf("default refresh token ttl = %v, want 7d", cfg.Auth.RefreshTokenTTL())
 	}
 }
 

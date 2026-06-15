@@ -2,6 +2,7 @@ package config
 
 import (
 	"strings"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -12,6 +13,7 @@ type Config struct {
 	Redis    RedisConfig
 	MinIO    MinIOConfig
 	AI       AIConfig
+	Auth     AuthConfig
 }
 
 type ServerConfig struct {
@@ -54,6 +56,29 @@ type AIConfig struct {
 	Model    string `mapstructure:"AI_MODEL"`
 }
 
+type AuthConfig struct {
+	JWTSecret             string `mapstructure:"JWT_SECRET"`
+	AccessTokenTTLMinutes int    `mapstructure:"ACCESS_TOKEN_TTL_MINUTES"`
+	RefreshTokenTTLDays   int    `mapstructure:"REFRESH_TOKEN_TTL_DAYS"`
+	GithubClientID        string `mapstructure:"GITHUB_CLIENT_ID"`
+	GithubClientSecret    string `mapstructure:"GITHUB_CLIENT_SECRET"`
+	GithubRedirectURL     string `mapstructure:"GITHUB_REDIRECT_URL"`
+}
+
+func (a AuthConfig) AccessTokenTTL() time.Duration {
+	if a.AccessTokenTTLMinutes <= 0 {
+		return 15 * time.Minute
+	}
+	return time.Duration(a.AccessTokenTTLMinutes) * time.Minute
+}
+
+func (a AuthConfig) RefreshTokenTTL() time.Duration {
+	if a.RefreshTokenTTLDays <= 0 {
+		return 7 * 24 * time.Hour
+	}
+	return time.Duration(a.RefreshTokenTTLDays) * 24 * time.Hour
+}
+
 func (d DatabaseConfig) DSN() string {
 	return "postgres://" + d.User + ":" + d.Password +
 		"@" + d.Host + ":" + d.Port + "/" + d.Name +
@@ -93,6 +118,9 @@ func Load() *Config {
 	v.SetDefault("MINIO_BUCKET", "goai-files")
 	v.SetDefault("MINIO_USE_SSL", false)
 	v.SetDefault("AI_PROVIDER", "openai")
+	v.SetDefault("JWT_SECRET", "change-me-in-production")
+	v.SetDefault("ACCESS_TOKEN_TTL_MINUTES", 15)
+	v.SetDefault("REFRESH_TOKEN_TTL_DAYS", 7)
 
 	cfg := Config{
 		Server: ServerConfig{
@@ -129,6 +157,14 @@ func Load() *Config {
 			APIKey:   v.GetString("AI_API_KEY"),
 			BaseURL:  v.GetString("AI_BASE_URL"),
 			Model:    v.GetString("AI_MODEL"),
+		},
+		Auth: AuthConfig{
+			JWTSecret:             v.GetString("JWT_SECRET"),
+			AccessTokenTTLMinutes: v.GetInt("ACCESS_TOKEN_TTL_MINUTES"),
+			RefreshTokenTTLDays:   v.GetInt("REFRESH_TOKEN_TTL_DAYS"),
+			GithubClientID:        v.GetString("GITHUB_CLIENT_ID"),
+			GithubClientSecret:    v.GetString("GITHUB_CLIENT_SECRET"),
+			GithubRedirectURL:     v.GetString("GITHUB_REDIRECT_URL"),
 		},
 	}
 

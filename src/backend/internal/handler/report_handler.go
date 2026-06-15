@@ -4,7 +4,9 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/ileego/go_react_ai/internal/middleware"
 	"github.com/ileego/go_react_ai/internal/service"
+	apperrors "github.com/ileego/go_react_ai/pkg/errors"
 	"github.com/ileego/go_react_ai/pkg/response"
 )
 
@@ -33,8 +35,8 @@ func (h *ReportHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// TODO: 从 JWT 中获取真实用户ID
-	var userID int64 = 1
+	// 从 JWT 上下文中获取真实用户ID
+	userID := middleware.GetUserID(c)
 
 	report, err := h.svc.Create(c.Request.Context(), userID, req.Title, req.Topic)
 	if err != nil {
@@ -60,6 +62,13 @@ func (h *ReportHandler) Get(c *gin.Context) {
 		return
 	}
 
+	userID := middleware.GetUserID(c)
+	role := middleware.GetUserRole(c)
+	if report.CreatedBy != userID && !canReadAnyReport(role) {
+		response.FromError(c, apperrors.NewForbidden("无权访问该报告").WithCode("FORBIDDEN"))
+		return
+	}
+
 	response.Data(c, report)
 }
 
@@ -69,8 +78,8 @@ func (h *ReportHandler) List(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "20"))
 
-	// TODO: 从 JWT 中获取真实用户ID
-	var userID int64 = 1
+	// 从 JWT 上下文中获取真实用户ID
+	userID := middleware.GetUserID(c)
 
 	reports, total, err := h.svc.ListByUser(c.Request.Context(), userID, page, pageSize)
 	if err != nil {
@@ -96,4 +105,8 @@ func (h *ReportHandler) Cancel(c *gin.Context) {
 	}
 
 	response.OK(c)
+}
+
+func canReadAnyReport(role string) bool {
+	return role == "admin" || role == "system"
 }

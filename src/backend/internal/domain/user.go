@@ -7,12 +7,22 @@ import (
 	"time"
 )
 
+// UserRole 用户角色
+type UserRole string
+
+const (
+	UserRoleSystem UserRole = "system" // 系统管理员
+	UserRoleAdmin  UserRole = "admin"  // 普通管理员
+	UserRoleUser   UserRole = "user"   // 普通用户
+)
+
 // User 表示平台用户
 type User struct {
 	ID        int64
 	Email     string
-	Name      string
+	Nickname  string
 	AvatarURL string
+	Role      UserRole
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -22,8 +32,11 @@ func (u *User) Validate() error {
 	if u.Email == "" {
 		return errors.New("邮箱不能为空")
 	}
-	if u.Name == "" {
-		return errors.New("姓名不能为空")
+	if u.Nickname == "" {
+		return errors.New("昵称不能为空")
+	}
+	if u.Role == "" {
+		u.Role = UserRoleUser
 	}
 	return nil
 }

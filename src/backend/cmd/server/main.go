@@ -3,13 +3,17 @@ package main
 import (
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/ileego/go_react_ai/docs"
+	"github.com/ileego/go_react_ai/internal/auth"
 	"github.com/ileego/go_react_ai/internal/config"
 	"github.com/ileego/go_react_ai/internal/handler"
 	"github.com/ileego/go_react_ai/internal/middleware"
 	"github.com/ileego/go_react_ai/internal/repository/postgres"
+	"github.com/ileego/go_react_ai/internal/repository/redis"
+	"github.com/ileego/go_react_ai/internal/security"
 	"github.com/ileego/go_react_ai/internal/service"
 )
 
@@ -36,13 +40,58 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 依赖注入（报告使用 PostgreSQL，其余模块暂时用内存实现）
+	// 初始化 Redis
+	redisClient := redis.New(cfg.Redis)
+	defer redisClient.Close()
+
+	// 安全组件
+	rateLimiter := security.NewRedisRateLimiter(redisClient.Client, security.IPLimitConfig{
+		Limit:  100,
+		Window: time.Minute,
+	}, security.LoginLimitConfig{
+		MaxAttempts: 5,
+		Window:      15 * time.Minute,
+		Lockout:     15 * time.Minute,
+	})
+	blacklist := security.NewRedisTokenBlacklist(redisClient.Client)
+
+	// GitHub OAuth2
+	oauthCfg := service.NewGithubOAuthConfig(
+		cfg.Auth.GithubClientID,
+		cfg.Auth.GithubClientSecret,
+		cfg.Auth.GithubRedirectURL,
+	)
+	var oauthState handler.OAuthStateStore
+	if oauthCfg != nil {
+		oauthState = handler.NewRedisOAuthStateStore(redisClient.Client)
+	}
+
+	// JWT 配置
+	jwtCfg := auth.Config{
+		Secret:          cfg.Auth.JWTSecret,
+		AccessTokenTTL:  cfg.Auth.AccessTokenTTL(),
+		RefreshTokenTTL: cfg.Auth.RefreshTokenTTL(),
+		Issuer:          "goai",
+	}
+
+	// 依赖注入
+	userRepo := postgres.NewUserRepository(db.DB)
 	reportRepo := postgres.NewReportRepository(db.DB)
 	reportSvc := service.NewReportService(reportRepo)
-	// TODO: taskRepo 在实现 AgentTaskRepository 后注入真实实现
 	agentSvc := service.NewAgentService(reportRepo, nil)
+	authSvc := service.NewAuthService(userRepo, jwtCfg, oauthCfg, rateLimiter, blacklist)
 
-	handlers := handler.NewHandlers(reportSvc, agentSvc, db.HealthCheck)
+	handlers := handler.NewHandlers(
+		authSvc,
+		reportSvc,
+		agentSvc,
+		oauthCfg,
+		oauthState,
+		cfg.Auth.JWTSecret,
+		blacklist,
+		rateLimiter,
+		db.HealthCheck,
+	)
 
 	// 创建 Gin 引擎
 	r := gin.New()
@@ -52,6 +101,7 @@ func main() {
 	r.Use(middleware.RequestID())
 	r.Use(middleware.Logger())
 	r.Use(middleware.CORS(cfg.Server.AllowOrigins))
+	r.Use(middleware.RateLimit(rateLimiter, 100, time.Minute))
 
 	// 注册业务路由
 	handlers.RegisterRoutes(r)
