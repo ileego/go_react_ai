@@ -3,10 +3,11 @@ package service
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ileego/go_react_ai/internal/repository"
-	"github.com/ileego/go_react_ai/pkg/errors"
+	apperrors "github.com/ileego/go_react_ai/pkg/errors"
 )
 
 // agentService 实现 AgentService 接口
@@ -30,7 +31,10 @@ func NewAgentService(
 func (s *agentService) Dispatch(ctx context.Context, reportID int64) error {
 	_, err := s.reportRepo.GetByID(ctx, reportID)
 	if err != nil {
-		return errors.NewNotFound("report", reportID)
+		if errors.Is(err, repository.ErrNotFound) {
+			return apperrors.NewNotFound("report", reportID)
+		}
+		return apperrors.NewInternal("查询报告失败", err)
 	}
 	// TODO: 实际调度逻辑在第25章实现
 	fmt.Printf("dispatch report %d\n", reportID)

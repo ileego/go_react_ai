@@ -21,11 +21,15 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	Host     string `mapstructure:"DB_HOST"`
-	Port     string `mapstructure:"DB_PORT"`
-	User     string `mapstructure:"DB_USER"`
-	Password string `mapstructure:"DB_PASSWORD"`
-	Name     string `mapstructure:"DB_NAME"`
+	Host            string `mapstructure:"DB_HOST"`
+	Port            string `mapstructure:"DB_PORT"`
+	User            string `mapstructure:"DB_USER"`
+	Password        string `mapstructure:"DB_PASSWORD"`
+	Name            string `mapstructure:"DB_NAME"`
+	MaxOpenConns    int    `mapstructure:"DB_MAX_OPEN_CONNS"`
+	MaxIdleConns    int    `mapstructure:"DB_MAX_IDLE_CONNS"`
+	ConnMaxLifetime int    `mapstructure:"DB_CONN_MAX_LIFETIME_MINUTES"`
+	ConnMaxIdleTime int    `mapstructure:"DB_CONN_MAX_IDLE_TIME_MINUTES"`
 }
 
 type RedisConfig struct {
@@ -73,6 +77,10 @@ func Load() *Config {
 	v.SetDefault("DB_USER", "goai")
 	v.SetDefault("DB_PASSWORD", "goai_dev")
 	v.SetDefault("DB_NAME", "goai")
+	v.SetDefault("DB_MAX_OPEN_CONNS", 25)
+	v.SetDefault("DB_MAX_IDLE_CONNS", 10)
+	v.SetDefault("DB_CONN_MAX_LIFETIME_MINUTES", 30)
+	v.SetDefault("DB_CONN_MAX_IDLE_TIME_MINUTES", 10)
 	v.SetDefault("REDIS_HOST", "localhost")
 	v.SetDefault("REDIS_PORT", "6379")
 	v.SetDefault("MINIO_ENDPOINT", "localhost:9000")
@@ -89,11 +97,15 @@ func Load() *Config {
 			AllowOrigins: v.GetString("ALLOW_ORIGINS"),
 		},
 		Database: DatabaseConfig{
-			Host:     v.GetString("DB_HOST"),
-			Port:     v.GetString("DB_PORT"),
-			User:     v.GetString("DB_USER"),
-			Password: v.GetString("DB_PASSWORD"),
-			Name:     v.GetString("DB_NAME"),
+			Host:            v.GetString("DB_HOST"),
+			Port:            v.GetString("DB_PORT"),
+			User:            v.GetString("DB_USER"),
+			Password:        v.GetString("DB_PASSWORD"),
+			Name:            v.GetString("DB_NAME"),
+			MaxOpenConns:    v.GetInt("DB_MAX_OPEN_CONNS"),
+			MaxIdleConns:    v.GetInt("DB_MAX_IDLE_CONNS"),
+			ConnMaxLifetime: v.GetInt("DB_CONN_MAX_LIFETIME_MINUTES"),
+			ConnMaxIdleTime: v.GetInt("DB_CONN_MAX_IDLE_TIME_MINUTES"),
 		},
 		Redis: RedisConfig{
 			Host: v.GetString("REDIS_HOST"),

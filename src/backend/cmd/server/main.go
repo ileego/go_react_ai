@@ -10,7 +10,7 @@ import (
 	"github.com/ileego/go_react_ai/internal/config"
 	"github.com/ileego/go_react_ai/internal/handler"
 	"github.com/ileego/go_react_ai/internal/middleware"
-	"github.com/ileego/go_react_ai/internal/repository/memory"
+	"github.com/ileego/go_react_ai/internal/repository/postgres"
 	"github.com/ileego/go_react_ai/internal/service"
 )
 
@@ -24,13 +24,21 @@ func main() {
 	// 初始化结构化日志
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
-	// 依赖注入（目前使用内存实现，第7章替换为 PostgreSQL）
-	reportRepo := memory.NewReportRepository()
-	// TODO: taskRepo 在实现 AgentTaskRepository 内存版后注入
-	// taskRepo := memory.NewAgentTaskRepository()
+	// 连接 PostgreSQL 并自动执行迁移
+	db, err := postgres.New(cfg.Database)
+	if err != nil {
+		log.Fatalf("Failed to connect database: %v", err)
+	}
+	defer db.Close()
 
+	if err := postgres.MigrateUp(cfg.Database); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
+	// 依赖注入（报告使用 PostgreSQL，其余模块暂时用内存实现）
+	reportRepo := postgres.NewReportRepository(db.DB)
 	reportSvc := service.NewReportService(reportRepo)
-	// TODO: agentSvc 在 taskRepo 就绪后注入真实实现
+	// TODO: taskRepo 在实现 AgentTaskRepository 后注入真实实现
 	agentSvc := service.NewAgentService(reportRepo, nil)
 
 	handlers := handler.NewHandlers(reportSvc, agentSvc)

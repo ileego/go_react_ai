@@ -4,11 +4,11 @@ package memory
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/ileego/go_react_ai/internal/domain"
+	"github.com/ileego/go_react_ai/internal/repository"
 )
 
 // ReportRepository 内存版报告数据访问实现
@@ -33,7 +33,7 @@ func (r *ReportRepository) GetByID(_ context.Context, id int64) (*domain.Report,
 
 	report, ok := r.reports[id]
 	if !ok {
-		return nil, fmt.Errorf("report %d not found", id)
+		return nil, repository.ErrNotFound
 	}
 	// 返回副本，避免外部修改影响内部状态
 	return copyReport(report), nil
@@ -84,7 +84,7 @@ func (r *ReportRepository) UpdateStatus(_ context.Context, id int64, status doma
 
 	report, ok := r.reports[id]
 	if !ok {
-		return fmt.Errorf("report %d not found", id)
+		return repository.ErrNotFound
 	}
 	report.Status = status
 	report.UpdatedAt = time.Now()
