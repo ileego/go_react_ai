@@ -33,6 +33,10 @@ Thumbs.db
 # 日志
 *.log
 
+# 提示词文件
+提示词.txt
+*.prompt.txt
+
 # Docker
 .docker/
 
