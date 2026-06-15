@@ -47,6 +47,7 @@ func (s *reportService) GetByID(ctx context.Context, id int64) (*domain.Report, 
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, apperrors.NewNotFound("report", id)
 		}
+		// 内部错误保留原始错误作为 Cause，方便日志追溯
 		return nil, apperrors.NewInternal("查询报告失败", err)
 	}
 	return report, nil
@@ -91,7 +92,8 @@ func (s *reportService) Cancel(ctx context.Context, id int64) error {
 	}
 
 	if !report.CanCancel() {
-		return apperrors.NewValidation("status", fmt.Sprintf("当前状态 %s 不允许取消", report.Status))
+		return apperrors.NewValidation("status", fmt.Sprintf("当前状态 %s 不允许取消", report.Status)).
+			WithCode("REPORT_CANNOT_CANCEL")
 	}
 
 	if err := s.repo.UpdateStatus(ctx, id, domain.ReportStatusFailed); err != nil {

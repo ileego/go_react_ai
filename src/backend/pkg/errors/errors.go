@@ -19,6 +19,7 @@ const (
 // Error 统一业务错误
 type Error struct {
 	Kind    Kind
+	Code    string // 前端稳定错误码，如 REPORT_NOT_FOUND
 	Field   string // 校验错误时对应的字段
 	Message string
 	Cause   error // 原始错误，用于日志追溯
@@ -33,6 +34,12 @@ func (e *Error) Error() string {
 
 func (e *Error) Unwrap() error {
 	return e.Cause
+}
+
+// WithCode 为错误设置前端稳定错误码，支持链式调用
+func (e *Error) WithCode(code string) *Error {
+	e.Code = code
+	return e
 }
 
 // IsKind 判断错误类型
@@ -56,4 +63,19 @@ func NewNotFound(resource string, id any) *Error {
 // NewInternal 创建内部错误
 func NewInternal(message string, cause error) *Error {
 	return &Error{Kind: KindInternal, Message: message, Cause: cause}
+}
+
+// NewDuplicate 创建资源重复错误
+func NewDuplicate(resource string, id any) *Error {
+	return &Error{Kind: KindDuplicate, Message: fmt.Sprintf("%s (id=%v) 已存在", resource, id)}
+}
+
+// NewUnauthorized 创建未授权错误
+func NewUnauthorized(message string) *Error {
+	return &Error{Kind: KindUnauthorized, Message: message}
+}
+
+// NewForbidden 创建禁止访问错误
+func NewForbidden(message string) *Error {
+	return &Error{Kind: KindForbidden, Message: message}
 }

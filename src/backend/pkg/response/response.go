@@ -12,6 +12,7 @@ import (
 // Body 统一响应体
 type Body[T any] struct {
 	Code    int    `json:"code"`
+	ErrCode string `json:"err_code,omitempty"`
 	Message string `json:"message,omitempty"`
 	Data    T      `json:"data,omitempty"`
 }
@@ -19,11 +20,22 @@ type Body[T any] struct {
 // ListBody 列表响应体
 type ListBody[T any] struct {
 	Code    int    `json:"code"`
+	ErrCode string `json:"err_code,omitempty"`
 	Message string `json:"message,omitempty"`
 	Data    T      `json:"data,omitempty"`
 	Total   int    `json:"total,omitempty"`
 	Page    int    `json:"page,omitempty"`
 	Size    int    `json:"size,omitempty"`
+}
+
+// defaultErrCode 将错误类型映射为前端稳定错误码
+var defaultErrCode = map[errors.Kind]string{
+	errors.KindValidation:   "VALIDATION_ERROR",
+	errors.KindNotFound:     "NOT_FOUND",
+	errors.KindDuplicate:    "DUPLICATE",
+	errors.KindUnauthorized: "UNAUTHORIZED",
+	errors.KindForbidden:    "FORBIDDEN",
+	errors.KindInternal:     "INTERNAL_ERROR",
 }
 
 // OK 成功响应（无数据）
@@ -73,24 +85,33 @@ func InternalServerError(c *gin.Context, message string) {
 }
 
 // FromError 根据业务错误类型返回对应的 HTTP 响应
-// 如果是 pkg/errors.Error，按 Kind 映射状态码；否则统一返回 500
+// 如果是 pkg/errors.Error，按 Kind 映射状态码并填充 err_code；否则统一返回 500
 func FromError(c *gin.Context, err error) {
 	if e, ok := err.(*errors.Error); ok {
+		status := http.StatusInternalServerError
 		switch e.Kind {
 		case errors.KindValidation:
-			Error(c, http.StatusBadRequest, e.Message)
+			status = http.StatusBadRequest
 		case errors.KindNotFound:
-			Error(c, http.StatusNotFound, e.Message)
+			status = http.StatusNotFound
 		case errors.KindDuplicate:
-			Error(c, http.StatusConflict, e.Message)
+			status = http.StatusConflict
 		case errors.KindUnauthorized:
-			Error(c, http.StatusUnauthorized, e.Message)
+			status = http.StatusUnauthorized
 		case errors.KindForbidden:
-			Error(c, http.StatusForbidden, e.Message)
-		default:
-			Error(c, http.StatusInternalServerError, e.Message)
+			status = http.StatusForbidden
 		}
+
+		errCode := e.Code
+		if errCode == "" {
+			errCode = defaultErrCode[e.Kind]
+		}
+		c.JSON(status, Body[any]{Code: status, ErrCode: errCode, Message: e.Message})
 		return
 	}
-	InternalServerError(c, err.Error())
+	c.JSON(http.StatusInternalServerError, Body[any]{
+		Code:    http.StatusInternalServerError,
+		ErrCode: "INTERNAL_ERROR",
+		Message: err.Error(),
+	})
 }

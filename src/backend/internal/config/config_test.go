@@ -24,6 +24,7 @@ func TestLoad_Defaults(t *testing.T) {
 	// 清理环境变量，避免外部配置干扰测试
 	for _, key := range []string{
 		"GOAI_SERVER_PORT", "GOAI_SERVER_MODE",
+		"GOAI_LOG_LEVEL", "GOAI_LOG_FORMAT",
 		"GOAI_DB_HOST", "GOAI_DB_PORT",
 		"GOAI_REDIS_HOST", "GOAI_REDIS_PORT",
 		"GOAI_AI_PROVIDER",
@@ -39,6 +40,12 @@ func TestLoad_Defaults(t *testing.T) {
 	if cfg.Server.Mode != "debug" {
 		t.Errorf("default mode = %q, want debug", cfg.Server.Mode)
 	}
+	if cfg.Server.LogLevel != "info" {
+		t.Errorf("default log level = %q, want info", cfg.Server.LogLevel)
+	}
+	if cfg.Server.LogFormat != "json" {
+		t.Errorf("default log format = %q, want json", cfg.Server.LogFormat)
+	}
 	if cfg.Database.Host != "localhost" {
 		t.Errorf("default db host = %q, want localhost", cfg.Database.Host)
 	}
@@ -53,11 +60,15 @@ func TestLoad_Defaults(t *testing.T) {
 func TestLoad_FromEnv(t *testing.T) {
 	os.Setenv("GOAI_SERVER_PORT", "9090")
 	os.Setenv("GOAI_SERVER_MODE", "release")
+	os.Setenv("GOAI_LOG_LEVEL", "debug")
+	os.Setenv("GOAI_LOG_FORMAT", "text")
 	os.Setenv("GOAI_DB_HOST", "db.example.com")
 	os.Setenv("GOAI_AI_PROVIDER", "deepseek")
 	defer func() {
 		os.Unsetenv("GOAI_SERVER_PORT")
 		os.Unsetenv("GOAI_SERVER_MODE")
+		os.Unsetenv("GOAI_LOG_LEVEL")
+		os.Unsetenv("GOAI_LOG_FORMAT")
 		os.Unsetenv("GOAI_DB_HOST")
 		os.Unsetenv("GOAI_AI_PROVIDER")
 	}()
@@ -69,6 +80,12 @@ func TestLoad_FromEnv(t *testing.T) {
 	}
 	if cfg.Server.Mode != "release" {
 		t.Errorf("mode = %q, want release", cfg.Server.Mode)
+	}
+	if cfg.Server.LogLevel != "debug" {
+		t.Errorf("log level = %q, want debug", cfg.Server.LogLevel)
+	}
+	if cfg.Server.LogFormat != "text" {
+		t.Errorf("log format = %q, want text", cfg.Server.LogFormat)
 	}
 	if cfg.Database.Host != "db.example.com" {
 		t.Errorf("db host = %q, want db.example.com", cfg.Database.Host)

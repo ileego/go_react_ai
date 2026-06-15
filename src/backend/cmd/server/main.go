@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"log/slog"
 	"os"
 
@@ -17,22 +16,24 @@ import (
 func main() {
 	cfg := config.Load()
 
+	// 初始化结构化日志：级别和格式均可通过环境变量配置
+	initLogger(cfg.Server.LogLevel, cfg.Server.LogFormat)
+
 	if cfg.Server.Mode == "release" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// 初始化结构化日志
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
-
 	// 连接 PostgreSQL 并自动执行迁移
 	db, err := postgres.New(cfg.Database)
 	if err != nil {
-		log.Fatalf("Failed to connect database: %v", err)
+		slog.Error("failed to connect database", slog.Any("error", err))
+		os.Exit(1)
 	}
 	defer db.Close()
 
 	if err := postgres.MigrateUp(cfg.Database); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
+		slog.Error("failed to migrate database", slog.Any("error", err))
+		os.Exit(1)
 	}
 
 	// 依赖注入（报告使用 PostgreSQL，其余模块暂时用内存实现）
@@ -41,7 +42,7 @@ func main() {
 	// TODO: taskRepo 在实现 AgentTaskRepository 后注入真实实现
 	agentSvc := service.NewAgentService(reportRepo, nil)
 
-	handlers := handler.NewHandlers(reportSvc, agentSvc)
+	handlers := handler.NewHandlers(reportSvc, agentSvc, db.HealthCheck)
 
 	// 创建 Gin 引擎
 	r := gin.New()
@@ -59,8 +60,27 @@ func main() {
 	docs.RegisterRoutes(r)
 
 	addr := ":" + cfg.Server.Port
-	log.Printf("Server starting on %s (mode=%s)", addr, cfg.Server.Mode)
+	slog.Info("server starting", slog.String("addr", addr), slog.String("mode", cfg.Server.Mode))
 	if err := r.Run(addr); err != nil {
-		log.Fatalf("Server failed: %v", err)
+		slog.Error("server failed", slog.Any("error", err))
+		os.Exit(1)
 	}
+}
+
+// initLogger 根据配置初始化 slog，支持运行时调整日志级别
+func initLogger(levelStr, format string) {
+	var level slog.LevelVar
+	if err := level.UnmarshalText([]byte(levelStr)); err != nil {
+		level.Set(slog.LevelInfo)
+	}
+
+	opts := &slog.HandlerOptions{Level: &level}
+	var handler slog.Handler
+	switch format {
+	case "text":
+		handler = slog.NewTextHandler(os.Stdout, opts)
+	default:
+		handler = slog.NewJSONHandler(os.Stdout, opts)
+	}
+	slog.SetDefault(slog.New(handler))
 }

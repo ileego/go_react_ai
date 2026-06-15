@@ -13,11 +13,11 @@ func Recovery() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				slog.Error("panic recovered",
+				logger := GetLogger(c)
+				logger.Error("panic recovered",
 					slog.Any("error", err),
 					slog.String("path", c.Request.URL.Path),
 					slog.String("method", c.Request.Method),
-					slog.String("request_id", GetRequestID(c)),
 				)
 				response.InternalServerError(c, "服务器内部错误")
 				c.Abort()

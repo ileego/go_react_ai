@@ -2,7 +2,10 @@
 // 这是 Clean Architecture 中最内层的“实体层”。
 package domain
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 // User 表示平台用户
 type User struct {
@@ -17,10 +20,10 @@ type User struct {
 // Validate 校验用户字段合法性
 func (u *User) Validate() error {
 	if u.Email == "" {
-		return NewValidationError("email", "邮箱不能为空")
+		return errors.New("邮箱不能为空")
 	}
 	if u.Name == "" {
-		return NewValidationError("name", "姓名不能为空")
+		return errors.New("姓名不能为空")
 	}
 	return nil
 }

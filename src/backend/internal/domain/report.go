@@ -1,6 +1,9 @@
 package domain
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 // ReportStatus 报告状态
 type ReportStatus string
@@ -29,10 +32,10 @@ type Report struct {
 // Validate 校验报告字段
 func (r *Report) Validate() error {
 	if r.Title == "" {
-		return NewValidationError("title", "标题不能为空")
+		return errors.New("标题不能为空")
 	}
 	if r.Topic == "" {
-		return NewValidationError("topic", "主题不能为空")
+		return errors.New("主题不能为空")
 	}
 	return nil
 }

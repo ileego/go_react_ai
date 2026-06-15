@@ -4,6 +4,8 @@
 package handler
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/ileego/go_react_ai/internal/service"
 )
@@ -19,11 +21,12 @@ type Handlers struct {
 func NewHandlers(
 	reportSvc service.ReportService,
 	agentSvc service.AgentService,
+	dbHealth func(context.Context) error,
 ) *Handlers {
 	return &Handlers{
 		Report: NewReportHandler(reportSvc),
 		Agent:  NewAgentHandler(agentSvc),
-		Health: NewHealthHandler(),
+		Health: NewHealthHandler(dbHealth),
 	}
 }
 
@@ -32,6 +35,7 @@ func (h *Handlers) RegisterRoutes(r *gin.Engine) {
 	api := r.Group("/api")
 	{
 		api.GET("/health", h.Health.Check)
+		api.GET("/ready", h.Health.Ready)
 
 		reports := api.Group("/reports")
 		{

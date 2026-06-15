@@ -15,6 +15,10 @@ func Logger() gin.HandlerFunc {
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
 
+		// 把带 request_id 的 logger 注入上下文，供后续 handler/service 使用
+		logger := slog.With(slog.String("request_id", GetRequestID(c)))
+		c.Set(loggerContextKey, logger)
+
 		c.Next()
 
 		latency := time.Since(start)
@@ -24,13 +28,12 @@ func Logger() gin.HandlerFunc {
 			path = path + "?" + raw
 		}
 
-		slog.Info("http request",
+		logger.Info("http request",
 			slog.String("method", c.Request.Method),
 			slog.String("path", path),
 			slog.Int("status", status),
 			slog.Duration("latency", latency),
 			slog.String("ip", c.ClientIP()),
-			slog.String("request_id", GetRequestID(c)),
 			slog.Int("errors", len(c.Errors)),
 		)
 	}

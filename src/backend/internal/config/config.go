@@ -18,6 +18,8 @@ type ServerConfig struct {
 	Port         string `mapstructure:"SERVER_PORT"`
 	Mode         string `mapstructure:"SERVER_MODE"` // debug / release
 	AllowOrigins string `mapstructure:"ALLOW_ORIGINS"`
+	LogLevel     string `mapstructure:"LOG_LEVEL"`  // debug / info / warn / error
+	LogFormat    string `mapstructure:"LOG_FORMAT"` // json / text
 }
 
 type DatabaseConfig struct {
@@ -72,6 +74,8 @@ func Load() *Config {
 	v.SetDefault("SERVER_PORT", "8080")
 	v.SetDefault("SERVER_MODE", "debug")
 	v.SetDefault("ALLOW_ORIGINS", "*")
+	v.SetDefault("LOG_LEVEL", "info")
+	v.SetDefault("LOG_FORMAT", "json")
 	v.SetDefault("DB_HOST", "localhost")
 	v.SetDefault("DB_PORT", "5432")
 	v.SetDefault("DB_USER", "goai")
@@ -95,6 +99,8 @@ func Load() *Config {
 			Port:         v.GetString("SERVER_PORT"),
 			Mode:         v.GetString("SERVER_MODE"),
 			AllowOrigins: v.GetString("ALLOW_ORIGINS"),
+			LogLevel:     v.GetString("LOG_LEVEL"),
+			LogFormat:    v.GetString("LOG_FORMAT"),
 		},
 		Database: DatabaseConfig{
 			Host:            v.GetString("DB_HOST"),
