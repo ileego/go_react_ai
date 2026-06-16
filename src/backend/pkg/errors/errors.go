@@ -8,10 +8,10 @@ import "fmt"
 type Kind string
 
 const (
-	KindValidation Kind = "validation" // 参数校验失败
-	KindNotFound   Kind = "not_found"  // 资源不存在
-	KindDuplicate  Kind = "duplicate"  // 重复数据
-	KindInternal   Kind = "internal"   // 内部错误
+	KindValidation   Kind = "validation"   // 参数校验失败
+	KindNotFound     Kind = "not_found"    // 资源不存在
+	KindDuplicate    Kind = "duplicate"    // 重复数据
+	KindInternal     Kind = "internal"     // 内部错误
 	KindUnauthorized Kind = "unauthorized" // 未授权
 	KindForbidden    Kind = "forbidden"    // 禁止访问
 )

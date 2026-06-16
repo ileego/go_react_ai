@@ -16,7 +16,7 @@ func MigrateUp(cfg config.DatabaseConfig) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	driver, err := pgx.WithInstance(db, &pgx.Config{})
 	if err != nil {
@@ -42,7 +42,7 @@ func MigrateDown(cfg config.DatabaseConfig) error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	driver, err := pgx.WithInstance(db, &pgx.Config{})
 	if err != nil {

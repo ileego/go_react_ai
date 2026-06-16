@@ -25,10 +25,10 @@ type OAuthStateStore interface {
 
 // AuthHandler 认证相关 HTTP 接口
 type AuthHandler struct {
-	authSvc     service.AuthService
-	oauthCfg    *oauth2.Config
-	oauthState  OAuthStateStore
-	rl          security.RateLimiter
+	authSvc    service.AuthService
+	oauthCfg   *oauth2.Config
+	oauthState OAuthStateStore
+	rl         security.RateLimiter
 }
 
 // NewAuthHandler 创建 AuthHandler
@@ -47,32 +47,32 @@ func NewAuthHandler(
 }
 
 // RegisterRequest 注册请求
- type RegisterRequest struct {
+type RegisterRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required,min=8"`
 	Nickname string `json:"nickname" binding:"required,min=1,max=50"`
 }
 
 // LoginRequest 登录请求
- type LoginRequest struct {
+type LoginRequest struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
 
 // RefreshRequest 刷新令牌请求
- type RefreshRequest struct {
+type RefreshRequest struct {
 	RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
 // TokenResponse 令牌响应
- type TokenResponse struct {
+type TokenResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
 	ExpiresIn    int64  `json:"expires_in"`
 }
 
 // UserResponse 用户信息响应
- type UserResponse struct {
+type UserResponse struct {
 	ID        int64  `json:"id"`
 	Email     string `json:"email"`
 	Nickname  string `json:"nickname"`

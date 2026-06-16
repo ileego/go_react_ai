@@ -36,10 +36,10 @@ type RateLimiter interface {
 
 // RedisRateLimiter 基于 Redis 的限流器实现
 type RedisRateLimiter struct {
-	client     *redis.Client
-	ipCfg      IPLimitConfig
-	loginCfg   LoginLimitConfig
-	keyPrefix  string
+	client    *redis.Client
+	ipCfg     IPLimitConfig
+	loginCfg  LoginLimitConfig
+	keyPrefix string
 }
 
 // NewRedisRateLimiter 创建 Redis 限流器

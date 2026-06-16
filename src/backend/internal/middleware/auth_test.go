@@ -149,7 +149,7 @@ func TestLoginRateLimit_Allowed(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	client := redis.NewClient(&redis.Options{Addr: miniredis.RunT(t).Addr()})
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	limiter := security.NewRedisRateLimiter(client, security.IPLimitConfig{}, security.LoginLimitConfig{
 		MaxAttempts: 5,
@@ -177,7 +177,7 @@ func TestLoginRateLimit_Blocked(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	client := redis.NewClient(&redis.Options{Addr: miniredis.RunT(t).Addr()})
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	limiter := security.NewRedisRateLimiter(client, security.IPLimitConfig{}, security.LoginLimitConfig{
 		MaxAttempts: 1,

@@ -35,11 +35,11 @@ var (
 
 // authService 实现 AuthService 接口
 type authService struct {
-	userRepo   repository.UserRepository
-	jwtCfg     auth.Config
-	oauthCfg   *oauth2.Config
-	rl         security.RateLimiter
-	blacklist  security.TokenBlacklist
+	userRepo  repository.UserRepository
+	jwtCfg    auth.Config
+	oauthCfg  *oauth2.Config
+	rl        security.RateLimiter
+	blacklist security.TokenBlacklist
 }
 
 // NewAuthService 创建 AuthService 实例
@@ -111,14 +111,14 @@ func (s *authService) Login(ctx context.Context, email, password string) (string
 	user, hash, err := s.userRepo.GetByEmailWithPassword(ctx, email)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
-			s.rl.RecordLoginFailure(ctx, key)
+			_, _, _ = s.rl.RecordLoginFailure(ctx, key)
 			return "", "", apperrors.NewUnauthorized("邮箱或密码错误").WithCode("INVALID_CREDENTIALS")
 		}
 		return "", "", apperrors.NewInternal("查询用户失败", err)
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password)); err != nil {
-		s.rl.RecordLoginFailure(ctx, key)
+		_, _, _ = s.rl.RecordLoginFailure(ctx, key)
 		return "", "", apperrors.NewUnauthorized("邮箱或密码错误").WithCode("INVALID_CREDENTIALS")
 	}
 
@@ -262,7 +262,7 @@ func (s *authService) fetchGithubUser(ctx context.Context, accessToken string) (
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)

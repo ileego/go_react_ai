@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/ileego/go_react_ai/internal/config"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 // DB 封装数据库连接，提供连接池和迁移支持

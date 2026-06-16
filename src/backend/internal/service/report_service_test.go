@@ -113,7 +113,9 @@ func TestReportService_Cancel_AlreadyCompleted(t *testing.T) {
 
 	report, _ := svc.Create(ctx, 1, "已完成报告", "主题")
 	// 手动更新状态为 completed（模拟报告已完成）
-	repo.UpdateStatus(ctx, report.ID, domain.ReportStatusCompleted)
+	if err := repo.UpdateStatus(ctx, report.ID, domain.ReportStatusCompleted); err != nil {
+		t.Fatalf("更新报告状态失败: %v", err)
+	}
 
 	// 尝试取消已完成的报告
 	err := svc.Cancel(ctx, report.ID)
@@ -130,7 +132,9 @@ func TestReportService_ListByUser(t *testing.T) {
 
 	// 创建 5 个报告
 	for i := 0; i < 5; i++ {
-		svc.Create(ctx, 1, fmt.Sprintf("报告%d", i+1), "主题")
+		if _, err := svc.Create(ctx, 1, fmt.Sprintf("报告%d", i+1), "主题"); err != nil {
+			t.Fatalf("创建报告失败: %v", err)
+		}
 	}
 
 	// 分页查询

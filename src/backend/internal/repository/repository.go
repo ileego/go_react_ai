@@ -43,4 +43,5 @@ type AgentTaskRepository interface {
 	GetByReportID(ctx context.Context, reportID int64) ([]*domain.AgentTask, error)
 	Create(ctx context.Context, task *domain.AgentTask) error
 	UpdateResult(ctx context.Context, id int64, output string, costMs int64) error
+	UpdateStatus(ctx context.Context, id int64, status string) error
 }

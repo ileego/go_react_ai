@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"log/slog"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,18 @@ func GetLogger(c *gin.Context) *slog.Logger {
 		if l, ok := v.(*slog.Logger); ok {
 			return l
 		}
+	}
+	return GetLoggerFromContext(c.Request.Context())
+}
+
+// GetLoggerFromContext 从 context.Context 中构造一个携带 request_id 的 logger。
+// 当 logger 没有通过 gin.Context 显式注入时，Service/Worker 可通过此方法复用请求追踪 ID。
+func GetLoggerFromContext(ctx context.Context) *slog.Logger {
+	if ctx == nil {
+		return slog.Default()
+	}
+	if rid := GetRequestIDFromContext(ctx); rid != "" {
+		return slog.With(slog.String("request_id", rid))
 	}
 	return slog.Default()
 }

@@ -16,7 +16,7 @@ func newTestRedis(t *testing.T) *redis.Client {
 
 func TestRedisRateLimiter_AllowIP(t *testing.T) {
 	client := newTestRedis(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	limiter := NewRedisRateLimiter(client, IPLimitConfig{
 		Limit:  2,
@@ -45,7 +45,7 @@ func TestRedisRateLimiter_AllowIP(t *testing.T) {
 
 func TestRedisRateLimiter_AllowLogin(t *testing.T) {
 	client := newTestRedis(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	limiter := NewRedisRateLimiter(client, IPLimitConfig{}, LoginLimitConfig{
 		MaxAttempts: 2,
@@ -79,7 +79,7 @@ func TestRedisRateLimiter_AllowLogin(t *testing.T) {
 
 func TestRedisRateLimiter_ResetLoginFailures(t *testing.T) {
 	client := newTestRedis(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	limiter := NewRedisRateLimiter(client, IPLimitConfig{}, LoginLimitConfig{
 		MaxAttempts: 2,
@@ -105,7 +105,7 @@ func TestRedisRateLimiter_ResetLoginFailures(t *testing.T) {
 
 func TestRedisTokenBlacklist(t *testing.T) {
 	client := newTestRedis(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	blacklist := NewRedisTokenBlacklist(client)
 	ctx := context.Background()
@@ -133,7 +133,7 @@ func TestRedisTokenBlacklist(t *testing.T) {
 
 func TestRedisTokenBlacklist_EmptyJTI(t *testing.T) {
 	client := newTestRedis(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	blacklist := NewRedisTokenBlacklist(client)
 	ctx := context.Background()

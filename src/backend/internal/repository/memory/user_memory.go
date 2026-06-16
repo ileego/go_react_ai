@@ -11,12 +11,12 @@ import (
 
 // UserRepository 内存版用户数据访问实现（主要用于测试）
 type UserRepository struct {
-	mu       sync.RWMutex
-	users    map[int64]*domain.User
+	mu        sync.RWMutex
+	users     map[int64]*domain.User
 	passwords map[int64]string
 	githubIDs map[string]int64
-	emails   map[string]int64
-	nextID   int64
+	emails    map[string]int64
+	nextID    int64
 }
 
 // NewUserRepository 创建内存版 UserRepository

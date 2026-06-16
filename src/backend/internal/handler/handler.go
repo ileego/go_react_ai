@@ -16,13 +16,13 @@ import (
 
 // Handlers 汇总所有 HTTP 处理器，方便路由注册时统一注入依赖
 type Handlers struct {
-	Auth       *AuthHandler
-	Report     *ReportHandler
-	Agent      *AgentHandler
-	Health     *HealthHandler
-	jwtSecret  string
-	blacklist  security.TokenBlacklist
-	rl         security.RateLimiter
+	Auth      *AuthHandler
+	Report    *ReportHandler
+	Agent     *AgentHandler
+	Health    *HealthHandler
+	jwtSecret string
+	blacklist security.TokenBlacklist
+	rl        security.RateLimiter
 }
 
 // NewHandlers 创建处理器实例，注入 Service 依赖

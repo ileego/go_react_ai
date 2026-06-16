@@ -8,12 +8,13 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
-	Redis    RedisConfig
-	MinIO    MinIOConfig
-	AI       AIConfig
-	Auth     AuthConfig
+	Server     ServerConfig
+	Database   DatabaseConfig
+	Redis      RedisConfig
+	MinIO      MinIOConfig
+	AI         AIConfig
+	Auth       AuthConfig
+	WorkerPool WorkerPoolConfig
 }
 
 type ServerConfig struct {
@@ -50,10 +51,34 @@ type MinIOConfig struct {
 }
 
 type AIConfig struct {
-	Provider string `mapstructure:"AI_PROVIDER"` // openai / anthropic / deepseek / kimi
-	APIKey   string `mapstructure:"AI_API_KEY"`
-	BaseURL  string `mapstructure:"AI_BASE_URL"`
-	Model    string `mapstructure:"AI_MODEL"`
+	Provider   string `mapstructure:"AI_PROVIDER"` // openai / anthropic / deepseek / kimi
+	APIKey     string `mapstructure:"AI_API_KEY"`
+	BaseURL    string `mapstructure:"AI_BASE_URL"`
+	Model      string `mapstructure:"AI_MODEL"`
+	TimeoutSec int    `mapstructure:"AI_TIMEOUT_SECONDS"`
+	MaxRetries int    `mapstructure:"AI_MAX_RETRIES"`
+}
+
+func (a AIConfig) APITimeout() time.Duration {
+	if a.TimeoutSec <= 0 {
+		return 30 * time.Second
+	}
+	return time.Duration(a.TimeoutSec) * time.Second
+}
+
+func (a AIConfig) RetryCount() int {
+	if a.MaxRetries < 0 {
+		return 0
+	}
+	if a.MaxRetries == 0 {
+		return 3
+	}
+	return a.MaxRetries
+}
+
+type WorkerPoolConfig struct {
+	Workers   int `mapstructure:"WORKER_POOL_WORKERS"`
+	QueueSize int `mapstructure:"WORKER_POOL_QUEUE_SIZE"`
 }
 
 type AuthConfig struct {
@@ -118,6 +143,10 @@ func Load() *Config {
 	v.SetDefault("MINIO_BUCKET", "goai-files")
 	v.SetDefault("MINIO_USE_SSL", false)
 	v.SetDefault("AI_PROVIDER", "openai")
+	v.SetDefault("AI_TIMEOUT_SECONDS", 30)
+	v.SetDefault("AI_MAX_RETRIES", 3)
+	v.SetDefault("WORKER_POOL_WORKERS", 4)
+	v.SetDefault("WORKER_POOL_QUEUE_SIZE", 8)
 	v.SetDefault("JWT_SECRET", "change-me-in-production")
 	v.SetDefault("ACCESS_TOKEN_TTL_MINUTES", 15)
 	v.SetDefault("REFRESH_TOKEN_TTL_DAYS", 7)
@@ -153,10 +182,12 @@ func Load() *Config {
 			UseSSL:    v.GetBool("MINIO_USE_SSL"),
 		},
 		AI: AIConfig{
-			Provider: v.GetString("AI_PROVIDER"),
-			APIKey:   v.GetString("AI_API_KEY"),
-			BaseURL:  v.GetString("AI_BASE_URL"),
-			Model:    v.GetString("AI_MODEL"),
+			Provider:   v.GetString("AI_PROVIDER"),
+			APIKey:     v.GetString("AI_API_KEY"),
+			BaseURL:    v.GetString("AI_BASE_URL"),
+			Model:      v.GetString("AI_MODEL"),
+			TimeoutSec: v.GetInt("AI_TIMEOUT_SECONDS"),
+			MaxRetries: v.GetInt("AI_MAX_RETRIES"),
 		},
 		Auth: AuthConfig{
 			JWTSecret:             v.GetString("JWT_SECRET"),
@@ -165,6 +196,10 @@ func Load() *Config {
 			GithubClientID:        v.GetString("GITHUB_CLIENT_ID"),
 			GithubClientSecret:    v.GetString("GITHUB_CLIENT_SECRET"),
 			GithubRedirectURL:     v.GetString("GITHUB_REDIRECT_URL"),
+		},
+		WorkerPool: WorkerPoolConfig{
+			Workers:   v.GetInt("WORKER_POOL_WORKERS"),
+			QueueSize: v.GetInt("WORKER_POOL_QUEUE_SIZE"),
 		},
 	}
 

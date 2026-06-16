@@ -133,7 +133,10 @@ paths:
 
   /reports/{report_id}/dispatch:
     post:
-      summary: 派发报告给智能体处理
+      summary: 异步派发报告生成任务
+      description: |
+        将报告生成任务提交到后台 Worker Pool，接口立即返回"任务已提交"。
+        实际生成过程在后台 goroutine 中异步执行，可通过 GET /reports/{id} 查询报告状态。
       operationId: dispatchReport
       tags:
         - Reports
@@ -146,13 +149,16 @@ paths:
             format: int64
       responses:
         "200":
-          description: 派发成功
+          description: 任务已提交
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/SuccessResponse"
+              example:
+                code: 0
+                message: "任务已提交"
         "400":
-          description: 参数错误
+          description: 参数错误或报告状态不允许派发
           content:
             application/json:
               schema:

@@ -5,8 +5,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/redis/go-redis/v9"
 	"github.com/ileego/go_react_ai/internal/config"
+	"github.com/redis/go-redis/v9"
 )
 
 // Client 封装 go-redis 客户端

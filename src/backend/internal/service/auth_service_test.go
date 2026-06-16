@@ -38,7 +38,7 @@ func newTestAuthService(t *testing.T) (AuthService, *redis.Client) {
 
 func TestAuthService_Register(t *testing.T) {
 	svc, client := newTestAuthService(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 	user, err := svc.Register(ctx, "test@example.com", "Password123", "Tester")
@@ -55,7 +55,7 @@ func TestAuthService_Register(t *testing.T) {
 
 func TestAuthService_RegisterWeakPassword(t *testing.T) {
 	svc, client := newTestAuthService(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 	_, err := svc.Register(ctx, "test@example.com", "123", "Tester")
@@ -66,7 +66,7 @@ func TestAuthService_RegisterWeakPassword(t *testing.T) {
 
 func TestAuthService_RegisterDuplicateEmail(t *testing.T) {
 	svc, client := newTestAuthService(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 	_, _ = svc.Register(ctx, "test@example.com", "Password123", "Tester")
@@ -78,7 +78,7 @@ func TestAuthService_RegisterDuplicateEmail(t *testing.T) {
 
 func TestAuthService_Login(t *testing.T) {
 	svc, client := newTestAuthService(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 	_, _ = svc.Register(ctx, "test@example.com", "Password123", "Tester")
@@ -94,7 +94,7 @@ func TestAuthService_Login(t *testing.T) {
 
 func TestAuthService_LoginWrongPassword(t *testing.T) {
 	svc, client := newTestAuthService(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 	_, _ = svc.Register(ctx, "test@example.com", "Password123", "Tester")
@@ -107,7 +107,7 @@ func TestAuthService_LoginWrongPassword(t *testing.T) {
 
 func TestAuthService_Refresh(t *testing.T) {
 	svc, client := newTestAuthService(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 	_, _ = svc.Register(ctx, "test@example.com", "Password123", "Tester")
@@ -130,7 +130,7 @@ func TestAuthService_Refresh(t *testing.T) {
 
 func TestAuthService_Logout(t *testing.T) {
 	svc, client := newTestAuthService(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 	_, _ = svc.Register(ctx, "test@example.com", "Password123", "Tester")
@@ -140,16 +140,23 @@ func TestAuthService_Logout(t *testing.T) {
 		t.Fatalf("logout failed: %v", err)
 	}
 
-	// access token 应被吊销，无法解析为有效 token
-	_, err := auth.ParseAndValidate(accessToken, auth.TokenTypeAccess, "test-secret")
-	if err == nil {
-		// 解析本身可能成功，但中间件会检查黑名单
+	// access token 应被吊销（黑名单检查）
+	jti, err := auth.ExtractJTI(accessToken)
+	if err != nil {
+		t.Fatalf("extract jti failed: %v", err)
+	}
+	blacklisted, err := svc.(*authService).blacklist.IsBlacklisted(ctx, jti)
+	if err != nil {
+		t.Fatalf("check blacklist failed: %v", err)
+	}
+	if !blacklisted {
+		t.Fatal("access token should be blacklisted after logout")
 	}
 }
 
 func TestAuthService_Me(t *testing.T) {
 	svc, client := newTestAuthService(t)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	ctx := context.Background()
 	user, _ := svc.Register(ctx, "test@example.com", "Password123", "Tester")

@@ -32,7 +32,7 @@ func TestLoad_Defaults(t *testing.T) {
 		"GOAI_JWT_SECRET", "GOAI_ACCESS_TOKEN_TTL_MINUTES", "GOAI_REFRESH_TOKEN_TTL_DAYS",
 		"GOAI_GITHUB_CLIENT_ID", "GOAI_GITHUB_CLIENT_SECRET", "GOAI_GITHUB_REDIRECT_URL",
 	} {
-		os.Unsetenv(key)
+		_ = os.Unsetenv(key)
 	}
 
 	cfg := Load()
@@ -70,19 +70,19 @@ func TestLoad_Defaults(t *testing.T) {
 }
 
 func TestLoad_FromEnv(t *testing.T) {
-	os.Setenv("GOAI_SERVER_PORT", "9090")
-	os.Setenv("GOAI_SERVER_MODE", "release")
-	os.Setenv("GOAI_LOG_LEVEL", "debug")
-	os.Setenv("GOAI_LOG_FORMAT", "text")
-	os.Setenv("GOAI_DB_HOST", "db.example.com")
-	os.Setenv("GOAI_AI_PROVIDER", "deepseek")
+	_ = os.Setenv("GOAI_SERVER_PORT", "9090")
+	_ = os.Setenv("GOAI_SERVER_MODE", "release")
+	_ = os.Setenv("GOAI_LOG_LEVEL", "debug")
+	_ = os.Setenv("GOAI_LOG_FORMAT", "text")
+	_ = os.Setenv("GOAI_DB_HOST", "db.example.com")
+	_ = os.Setenv("GOAI_AI_PROVIDER", "deepseek")
 	defer func() {
-		os.Unsetenv("GOAI_SERVER_PORT")
-		os.Unsetenv("GOAI_SERVER_MODE")
-		os.Unsetenv("GOAI_LOG_LEVEL")
-		os.Unsetenv("GOAI_LOG_FORMAT")
-		os.Unsetenv("GOAI_DB_HOST")
-		os.Unsetenv("GOAI_AI_PROVIDER")
+		_ = os.Unsetenv("GOAI_SERVER_PORT")
+		_ = os.Unsetenv("GOAI_SERVER_MODE")
+		_ = os.Unsetenv("GOAI_LOG_LEVEL")
+		_ = os.Unsetenv("GOAI_LOG_FORMAT")
+		_ = os.Unsetenv("GOAI_DB_HOST")
+		_ = os.Unsetenv("GOAI_AI_PROVIDER")
 	}()
 
 	cfg := Load()
@@ -108,17 +108,17 @@ func TestLoad_FromEnv(t *testing.T) {
 }
 
 func TestLoad_DSNWithSpecialChars(t *testing.T) {
-	os.Setenv("GOAI_DB_USER", "user")
-	os.Setenv("GOAI_DB_PASSWORD", "p@ss:w0rd!")
-	os.Setenv("GOAI_DB_HOST", "host")
-	os.Setenv("GOAI_DB_PORT", "5432")
-	os.Setenv("GOAI_DB_NAME", "db")
+	_ = os.Setenv("GOAI_DB_USER", "user")
+	_ = os.Setenv("GOAI_DB_PASSWORD", "p@ss:w0rd!")
+	_ = os.Setenv("GOAI_DB_HOST", "host")
+	_ = os.Setenv("GOAI_DB_PORT", "5432")
+	_ = os.Setenv("GOAI_DB_NAME", "db")
 	defer func() {
-		os.Unsetenv("GOAI_DB_USER")
-		os.Unsetenv("GOAI_DB_PASSWORD")
-		os.Unsetenv("GOAI_DB_HOST")
-		os.Unsetenv("GOAI_DB_PORT")
-		os.Unsetenv("GOAI_DB_NAME")
+		_ = os.Unsetenv("GOAI_DB_USER")
+		_ = os.Unsetenv("GOAI_DB_PASSWORD")
+		_ = os.Unsetenv("GOAI_DB_HOST")
+		_ = os.Unsetenv("GOAI_DB_PORT")
+		_ = os.Unsetenv("GOAI_DB_NAME")
 	}()
 
 	cfg := Load()

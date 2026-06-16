@@ -35,10 +35,10 @@ type TokenPair struct {
 
 // Config JWT 配置
 type Config struct {
-	Secret           string
-	AccessTokenTTL   time.Duration
-	RefreshTokenTTL  time.Duration
-	Issuer           string
+	Secret          string
+	AccessTokenTTL  time.Duration
+	RefreshTokenTTL time.Duration
+	Issuer          string
 }
 
 var (

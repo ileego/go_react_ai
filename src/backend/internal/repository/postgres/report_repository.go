@@ -37,7 +37,7 @@ func (r *ReportRepository) ListByUser(ctx context.Context, userID int64, limit, 
 	if err != nil {
 		return nil, fmt.Errorf("list reports: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	var reports []*domain.Report
 	for rows.Next() {

@@ -1,8 +1,13 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,6 +20,8 @@ import (
 	"github.com/ileego/go_react_ai/internal/repository/redis"
 	"github.com/ileego/go_react_ai/internal/security"
 	"github.com/ileego/go_react_ai/internal/service"
+	"github.com/ileego/go_react_ai/pkg/httpx"
+	"github.com/ileego/go_react_ai/pkg/worker"
 )
 
 func main() {
@@ -33,7 +40,7 @@ func main() {
 		slog.Error("failed to connect database", slog.Any("error", err))
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	if err := postgres.MigrateUp(cfg.Database); err != nil {
 		slog.Error("failed to migrate database", slog.Any("error", err))
@@ -42,7 +49,7 @@ func main() {
 
 	// 初始化 Redis
 	redisClient := redis.New(cfg.Redis)
-	defer redisClient.Close()
+	defer func() { _ = redisClient.Close() }()
 
 	// 安全组件
 	rateLimiter := security.NewRedisRateLimiter(redisClient.Client, security.IPLimitConfig{
@@ -74,11 +81,25 @@ func main() {
 		Issuer:          "goai",
 	}
 
+	// Worker Pool：有界并发与背压处理
+	workerPool := worker.NewPool(cfg.WorkerPool.Workers, cfg.WorkerPool.QueueSize)
+	workerPool.Start()
+
+	// HTTP 客户端：带超时、重试与降级
+	retryCfg := httpx.DefaultRetryConfig()
+	retryCfg.MaxRetries = cfg.AI.RetryCount()
+	aiHTTPClient := httpx.NewClientWithFallback(
+		cfg.AI.APITimeout(),
+		retryCfg,
+		aiFallback(cfg.AI.Provider),
+	)
+
 	// 依赖注入
 	userRepo := postgres.NewUserRepository(db.DB)
 	reportRepo := postgres.NewReportRepository(db.DB)
+	taskRepo := postgres.NewAgentTaskRepository(db.DB)
 	reportSvc := service.NewReportService(reportRepo)
-	agentSvc := service.NewAgentService(reportRepo, nil)
+	agentSvc := service.NewAgentService(reportRepo, taskRepo, workerPool, aiHTTPClient, cfg.AI.BaseURL+"/api/mock-ai")
 	authSvc := service.NewAuthService(userRepo, jwtCfg, oauthCfg, rateLimiter, blacklist)
 
 	handlers := handler.NewHandlers(
@@ -109,11 +130,47 @@ func main() {
 	// Swagger API 文档
 	docs.RegisterRoutes(r)
 
-	addr := ":" + cfg.Server.Port
-	slog.Info("server starting", slog.String("addr", addr), slog.String("mode", cfg.Server.Mode))
-	if err := r.Run(addr); err != nil {
-		slog.Error("server failed", slog.Any("error", err))
-		os.Exit(1)
+	// HTTP server
+	srv := &http.Server{
+		Addr:    ":" + cfg.Server.Port,
+		Handler: r,
+	}
+
+	// 优雅启停：监听系统信号
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("server failed", slog.Any("error", err))
+			os.Exit(1)
+		}
+	}()
+
+	slog.Info("server starting", slog.String("addr", srv.Addr), slog.String("mode", cfg.Server.Mode))
+
+	// 等待退出信号
+	<-ctx.Done()
+	slog.Info("server shutting down")
+
+	// 优雅关闭顺序：先停 Worker Pool，再关 HTTP server，最后释放基础资源
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	workerPool.Stop()
+	_ = srv.Shutdown(shutdownCtx)
+
+	slog.Info("server stopped")
+}
+
+// aiFallback 返回 AI 调用失败时的兜底内容。
+// 第 21 章会替换为真实 Provider 的降级策略。
+func aiFallback(provider string) httpx.FallbackFunc {
+	return func(err error, resp *http.Response) ([]byte, error) {
+		slog.Warn("AI call failed, using fallback content", "error", err)
+		content := "## 研究报告（降级内容）\n\n由于 AI 服务暂时不可用，本次生成使用兜底内容。请稍后重试或检查 API 配置。\n\n### 提供商\n" + provider
+		result := map[string]string{"output": content}
+		return json.Marshal(result)
 	}
 }
 
