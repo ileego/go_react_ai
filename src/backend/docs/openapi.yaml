@@ -170,6 +170,228 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
+  /search/reports:
+    get:
+      summary: 全文搜索报告
+      operationId: searchReports
+      tags:
+        - Search
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 搜索关键词
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: 搜索结果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportListResponse"
+        "400":
+          description: 缺少搜索关键词
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /files:
+    get:
+      summary: 获取文件列表
+      operationId: listFiles
+      tags:
+        - Files
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        "200":
+          description: 文件列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileListResponse"
+
+    post:
+      summary: 上传文件
+      operationId: uploadFile
+      tags:
+        - Files
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 文件内容
+      responses:
+        "201":
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        "400":
+          description: 参数校验失败
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /files/{id}:
+    get:
+      summary: 获取文件元数据
+      operationId: getFile
+      tags:
+        - Files
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 文件元数据
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/File"
+        "404":
+          description: 文件不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /files/{id}/download:
+    get:
+      summary: 获取文件临时下载链接
+      operationId: downloadFile
+      tags:
+        - Files
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 临时下载链接
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FileDownloadResponse"
+        "404":
+          description: 文件不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /files/{id}/delete:
+    delete:
+      summary: 删除文件
+      operationId: deleteFile
+      tags:
+        - Files
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: 删除成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "404":
+          description: 文件不存在
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /files/presigned-upload:
+    get:
+      summary: 获取客户端直传的预签名上传链接
+      operationId: presignedUpload
+      tags:
+        - Files
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 文件名
+        - name: content_type
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 文件 MIME 类型
+      responses:
+        "200":
+          description: 预签名上传链接
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PresignedUploadResponse"
+        "400":
+          description: 参数校验失败
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthResponse:
@@ -248,6 +470,71 @@ components:
         size:
           type: integer
 
+    File:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+        content_type:
+          type: string
+        size:
+          type: integer
+          format: int64
+        bucket:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    FileListResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/File"
+        total:
+          type: integer
+        page:
+          type: integer
+        size:
+          type: integer
+
+    FileDownloadResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        data:
+          type: object
+          properties:
+            download_url:
+              type: string
+            expires_in:
+              type: integer
+              format: int64
+
+    PresignedUploadResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        data:
+          type: object
+          properties:
+            upload_url:
+              type: string
+            file:
+              $ref: "#/components/schemas/File"
+            expires_in:
+              type: integer
+              format: int64
+
     SuccessResponse:
       type: object
       properties:
@@ -264,3 +551,9 @@ components:
           type: integer
         message:
           type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

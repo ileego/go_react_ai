@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
+	"github.com/ileego/go_react_ai/internal/cache"
 	"github.com/ileego/go_react_ai/internal/domain"
 	"github.com/ileego/go_react_ai/internal/repository/memory"
 )
@@ -13,7 +13,7 @@ import (
 func TestReportService_Create(t *testing.T) {
 	// Arrange: 准备测试数据
 	repo := memory.NewReportRepository()
-	svc := NewReportService(repo)
+	svc := NewReportService(repo, nil)
 	ctx := context.Background()
 
 	// Act: 执行被测操作
@@ -37,7 +37,7 @@ func TestReportService_Create(t *testing.T) {
 // TestReportService_Create_Validation 测试创建报告时的参数校验
 func TestReportService_Create_Validation(t *testing.T) {
 	repo := memory.NewReportRepository()
-	svc := NewReportService(repo)
+	svc := NewReportService(repo, nil)
 	ctx := context.Background()
 
 	tests := []struct {
@@ -64,7 +64,7 @@ func TestReportService_Create_Validation(t *testing.T) {
 // TestReportService_GetByID 测试获取报告
 func TestReportService_GetByID(t *testing.T) {
 	repo := memory.NewReportRepository()
-	svc := NewReportService(repo)
+	svc := NewReportService(repo, nil)
 	ctx := context.Background()
 
 	// 先创建一个报告
@@ -89,7 +89,7 @@ func TestReportService_GetByID(t *testing.T) {
 // TestReportService_Cancel 测试取消报告
 func TestReportService_Cancel(t *testing.T) {
 	repo := memory.NewReportRepository()
-	svc := NewReportService(repo)
+	svc := NewReportService(repo, nil)
 	ctx := context.Background()
 
 	// 创建并取消一个 pending 状态的报告
@@ -108,7 +108,7 @@ func TestReportService_Cancel(t *testing.T) {
 // TestReportService_Cancel_AlreadyCompleted 测试已完成报告不能取消
 func TestReportService_Cancel_AlreadyCompleted(t *testing.T) {
 	repo := memory.NewReportRepository()
-	svc := NewReportService(repo)
+	svc := NewReportService(repo, nil)
 	ctx := context.Background()
 
 	report, _ := svc.Create(ctx, 1, "已完成报告", "主题")
@@ -127,12 +127,12 @@ func TestReportService_Cancel_AlreadyCompleted(t *testing.T) {
 // TestReportService_ListByUser 测试分页列表
 func TestReportService_ListByUser(t *testing.T) {
 	repo := memory.NewReportRepository()
-	svc := NewReportService(repo)
+	svc := NewReportService(repo, nil)
 	ctx := context.Background()
 
 	// 创建 5 个报告
-	for i := 0; i < 5; i++ {
-		if _, err := svc.Create(ctx, 1, fmt.Sprintf("报告%d", i+1), "主题"); err != nil {
+	for range 5 {
+		if _, err := svc.Create(ctx, 1, "报告", "主题"); err != nil {
 			t.Fatalf("创建报告失败: %v", err)
 		}
 	}
@@ -147,5 +147,53 @@ func TestReportService_ListByUser(t *testing.T) {
 	}
 	if len(reports) != 2 {
 		t.Errorf("每页 2 条，应返回 2 条, 得到 %d", len(reports))
+	}
+}
+
+// TestReportService_GetByID_CacheHit 测试缓存命中。
+func TestReportService_GetByID_CacheHit(t *testing.T) {
+	repo := memory.NewReportRepository()
+	memCache := cache.NewMemoryCache(cache.DefaultConfig())
+	svc := NewReportService(repo, memCache)
+	ctx := context.Background()
+
+	report, _ := svc.Create(ctx, 1, "缓存测试", "主题")
+
+	// 第一次从 DB 读取并写入缓存
+	_, _ = svc.GetByID(ctx, report.ID)
+
+	// 直接修改 repo 中的数据，如果缓存命中，应该拿到旧值
+	_ = repo.UpdateStatus(ctx, report.ID, domain.ReportStatusCompleted)
+
+	cached, err := svc.GetByID(ctx, report.ID)
+	if err != nil {
+		t.Fatalf("get failed: %v", err)
+	}
+	if cached.Status != domain.ReportStatusPending {
+		t.Errorf("cache hit should return pending, got %s", cached.Status)
+	}
+}
+
+// TestReportService_Create_InvalidatesListCache 测试创建后列表缓存失效。
+func TestReportService_Create_InvalidatesListCache(t *testing.T) {
+	repo := memory.NewReportRepository()
+	memCache := cache.NewMemoryCache(cache.DefaultConfig())
+	svc := NewReportService(repo, memCache)
+	ctx := context.Background()
+
+	_, _ = svc.Create(ctx, 1, "报告1", "主题")
+	_, _, _ = svc.ListByUser(ctx, 1, 1, 10)
+
+	// 缓存中应该有列表
+	var cached []*domain.Report
+	if err := memCache.Get(ctx, cache.ReportListKey(1, 1, 10), &cached); err != nil {
+		t.Fatalf("list should be cached: %v", err)
+	}
+
+	_, _ = svc.Create(ctx, 1, "报告2", "主题")
+
+	// 创建后列表缓存应被清除
+	if err := memCache.Get(ctx, cache.ReportListKey(1, 1, 10), &cached); err != cache.ErrCacheMiss {
+		t.Errorf("list cache should be invalidated, got %v", err)
 	}
 }

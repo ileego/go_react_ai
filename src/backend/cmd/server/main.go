@@ -13,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ileego/go_react_ai/docs"
 	"github.com/ileego/go_react_ai/internal/auth"
+	"github.com/ileego/go_react_ai/internal/cache"
 	"github.com/ileego/go_react_ai/internal/config"
 	"github.com/ileego/go_react_ai/internal/handler"
 	"github.com/ileego/go_react_ai/internal/middleware"
@@ -20,6 +21,7 @@ import (
 	"github.com/ileego/go_react_ai/internal/repository/redis"
 	"github.com/ileego/go_react_ai/internal/security"
 	"github.com/ileego/go_react_ai/internal/service"
+	"github.com/ileego/go_react_ai/internal/storage"
 	"github.com/ileego/go_react_ai/pkg/httpx"
 	"github.com/ileego/go_react_ai/pkg/worker"
 )
@@ -50,6 +52,12 @@ func main() {
 	// 初始化 Redis
 	redisClient := redis.New(cfg.Redis)
 	defer func() { _ = redisClient.Close() }()
+
+	// 缓存层
+	cacheMgr := cache.NewRedisCache(redisClient.Client, cache.Config{
+		DefaultTTL: cfg.Cache.DefaultTTL(),
+		Prefix:     cfg.Cache.Prefix,
+	})
 
 	// 安全组件
 	rateLimiter := security.NewRedisRateLimiter(redisClient.Client, security.IPLimitConfig{
@@ -94,18 +102,28 @@ func main() {
 		aiFallback(cfg.AI.Provider),
 	)
 
+	// 文件存储：优先 MinIO，连接失败时降级到本地文件系统
+	fileStorage := newFileStorage(cfg.MinIO)
+
 	// 依赖注入
 	userRepo := postgres.NewUserRepository(db.DB)
 	reportRepo := postgres.NewReportRepository(db.DB)
 	taskRepo := postgres.NewAgentTaskRepository(db.DB)
-	reportSvc := service.NewReportService(reportRepo)
-	agentSvc := service.NewAgentService(reportRepo, taskRepo, workerPool, aiHTTPClient, cfg.AI.BaseURL+"/api/mock-ai")
+	searchRepo := postgres.NewSearchRepository(db.DB)
+	fileRepo := postgres.NewFileRepository(db.DB)
+
+	reportSvc := service.NewReportService(reportRepo, cacheMgr)
+	agentSvc := service.NewAgentService(reportSvc, taskRepo, workerPool, aiHTTPClient, cfg.AI.BaseURL+"/api/mock-ai")
 	authSvc := service.NewAuthService(userRepo, jwtCfg, oauthCfg, rateLimiter, blacklist)
+	searchSvc := service.NewSearchService(searchRepo)
+	fileSvc := service.NewFileService(fileRepo, fileStorage, cfg.MinIO.Bucket, 0, nil)
 
 	handlers := handler.NewHandlers(
 		authSvc,
 		reportSvc,
 		agentSvc,
+		searchSvc,
+		fileSvc,
 		oauthCfg,
 		oauthState,
 		cfg.Auth.JWTSecret,
@@ -161,6 +179,25 @@ func main() {
 	_ = srv.Shutdown(shutdownCtx)
 
 	slog.Info("server stopped")
+}
+
+// newFileStorage 根据配置创建 MinIO 或本地存储。
+func newFileStorage(cfg config.MinIOConfig) storage.FileStorage {
+	if cfg.Endpoint != "" {
+		store, err := storage.NewMinIOStorage(cfg.Endpoint, cfg.AccessKey, cfg.SecretKey, cfg.Bucket, cfg.UseSSL)
+		if err == nil {
+			slog.Info("using MinIO storage", "endpoint", cfg.Endpoint, "bucket", cfg.Bucket)
+			return store
+		}
+		slog.Warn("failed to connect MinIO, falling back to local storage", "error", err)
+	}
+	store, err := storage.NewLocalStorage("data/uploads")
+	if err != nil {
+		slog.Error("failed to create local storage", slog.Any("error", err))
+		os.Exit(1)
+	}
+	slog.Info("using local file storage")
+	return store
 }
 
 // aiFallback 返回 AI 调用失败时的兜底内容。

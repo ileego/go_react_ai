@@ -19,6 +19,8 @@ type Handlers struct {
 	Auth      *AuthHandler
 	Report    *ReportHandler
 	Agent     *AgentHandler
+	Search    *SearchHandler
+	File      *FileHandler
 	Health    *HealthHandler
 	jwtSecret string
 	blacklist security.TokenBlacklist
@@ -30,6 +32,8 @@ func NewHandlers(
 	authSvc service.AuthService,
 	reportSvc service.ReportService,
 	agentSvc service.AgentService,
+	searchSvc service.SearchService,
+	fileSvc service.FileService,
 	oauthCfg *oauth2.Config,
 	oauthState OAuthStateStore,
 	jwtSecret string,
@@ -41,6 +45,8 @@ func NewHandlers(
 		Auth:      NewAuthHandler(authSvc, oauthCfg, oauthState, rl),
 		Report:    NewReportHandler(reportSvc),
 		Agent:     NewAgentHandler(agentSvc),
+		Search:    NewSearchHandler(searchSvc),
+		File:      NewFileHandler(fileSvc),
 		Health:    NewHealthHandler(dbHealth),
 		jwtSecret: jwtSecret,
 		blacklist: blacklist,
@@ -77,6 +83,27 @@ func (h *Handlers) RegisterRoutes(r *gin.Engine) {
 			reports.GET("/:id", h.Report.Get)
 			reports.POST("/:id/cancel", h.Report.Cancel)
 			reports.POST("/:report_id/dispatch", middleware.RequireRole("admin", "system"), h.Agent.Dispatch)
+		}
+
+		// 搜索接口
+		search := api.Group("/search")
+		search.Use(middleware.JWTAuth(h.jwtSecret, h.blacklist))
+		search.Use(middleware.RateLimit(h.rl, 60, time.Minute))
+		{
+			search.GET("/reports", h.Search.Reports)
+		}
+
+		// 文件接口
+		files := api.Group("/files")
+		files.Use(middleware.JWTAuth(h.jwtSecret, h.blacklist))
+		files.Use(middleware.RateLimit(h.rl, 50, time.Minute))
+		{
+			files.POST("", h.File.Upload)
+			files.GET("", h.File.List)
+			files.GET("/:id", h.File.Get)
+			files.GET("/:id/download", h.File.Download)
+			files.DELETE("/:id", h.File.Delete)
+			files.GET("/presigned-upload", h.File.PresignedUpload)
 		}
 	}
 }

@@ -4,7 +4,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -20,7 +19,7 @@ import (
 
 // agentService 实现 AgentService 接口
 type agentService struct {
-	reportRepo repository.ReportRepository
+	reportSvc  ReportService
 	taskRepo   repository.AgentTaskRepository
 	workerPool *worker.Pool
 	httpClient *httpx.Client
@@ -29,14 +28,14 @@ type agentService struct {
 
 // NewAgentService 创建 AgentService 实例
 func NewAgentService(
-	reportRepo repository.ReportRepository,
+	reportSvc ReportService,
 	taskRepo repository.AgentTaskRepository,
 	workerPool *worker.Pool,
 	httpClient *httpx.Client,
 	aiEndpoint string,
 ) AgentService {
 	return &agentService{
-		reportRepo: reportRepo,
+		reportSvc:  reportSvc,
 		taskRepo:   taskRepo,
 		workerPool: workerPool,
 		httpClient: httpClient,
@@ -47,12 +46,9 @@ func NewAgentService(
 // Dispatch 将报告生成任务异步提交到 Worker Pool。
 // 调用方会立即收到"任务已提交"响应，实际执行在后台 goroutine 中完成。
 func (s *agentService) Dispatch(ctx context.Context, reportID int64) error {
-	report, err := s.reportRepo.GetByID(ctx, reportID)
+	report, err := s.reportSvc.GetByID(ctx, reportID)
 	if err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			return apperrors.NewNotFound("report", reportID)
-		}
-		return apperrors.NewInternal("查询报告失败", err)
+		return err
 	}
 
 	if report.Status != domain.ReportStatusPending {
@@ -60,7 +56,7 @@ func (s *agentService) Dispatch(ctx context.Context, reportID int64) error {
 			WithCode("REPORT_NOT_PENDING")
 	}
 
-	if err := s.reportRepo.UpdateStatus(ctx, reportID, domain.ReportStatusRunning); err != nil {
+	if err := s.reportSvc.UpdateStatus(ctx, reportID, domain.ReportStatusRunning); err != nil {
 		return apperrors.NewInternal("更新报告状态失败", err)
 	}
 
@@ -69,7 +65,7 @@ func (s *agentService) Dispatch(ctx context.Context, reportID int64) error {
 		title:      report.Title,
 		topic:      report.Topic,
 		aiEndpoint: s.aiEndpoint,
-		reportRepo: s.reportRepo,
+		reportSvc:  s.reportSvc,
 		taskRepo:   s.taskRepo,
 		httpClient: s.httpClient,
 		logger:     middleware.GetLoggerFromContext(ctx).With("report_id", reportID),
@@ -77,7 +73,7 @@ func (s *agentService) Dispatch(ctx context.Context, reportID int64) error {
 
 	if err := s.workerPool.SubmitBlocking(ctx, job); err != nil {
 		// 提交失败，回滚报告状态，避免任务丢失
-		_ = s.reportRepo.UpdateStatus(ctx, reportID, domain.ReportStatusPending)
+		_ = s.reportSvc.UpdateStatus(ctx, reportID, domain.ReportStatusPending)
 		return apperrors.NewInternal("任务提交失败", err)
 	}
 
@@ -90,7 +86,7 @@ type reportGenerationJob struct {
 	title      string
 	topic      string
 	aiEndpoint string
-	reportRepo repository.ReportRepository
+	reportSvc  ReportService
 	taskRepo   repository.AgentTaskRepository
 	httpClient *httpx.Client
 	logger     *slog.Logger
@@ -137,7 +133,7 @@ func (j *reportGenerationJob) Execute(ctx context.Context) error {
 		j.logger.Error("更新任务状态失败", "error", err)
 	}
 
-	if err := j.reportRepo.UpdateStatus(ctx, j.reportID, domain.ReportStatusCompleted); err != nil {
+	if err := j.reportSvc.UpdateStatus(ctx, j.reportID, domain.ReportStatusCompleted); err != nil {
 		j.logger.Error("更新报告状态失败", "error", err)
 		return err
 	}
@@ -172,5 +168,5 @@ func (j *reportGenerationJob) callAI(ctx context.Context, input string) (string,
 }
 
 func (j *reportGenerationJob) markReportFailed(ctx context.Context) {
-	_ = j.reportRepo.UpdateStatus(ctx, j.reportID, domain.ReportStatusFailed)
+	_ = j.reportSvc.UpdateStatus(ctx, j.reportID, domain.ReportStatusFailed)
 }

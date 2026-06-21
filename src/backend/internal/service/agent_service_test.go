@@ -25,7 +25,8 @@ func newTestAgentService(endpoint string, client *httpx.Client) (AgentService, *
 	pool := worker.NewPool(2, 10)
 	pool.Start()
 
-	svc := NewAgentService(reportRepo, taskRepo, pool, client, endpoint)
+	reportSvc := NewReportService(reportRepo, nil)
+	svc := NewAgentService(reportSvc, taskRepo, pool, client, endpoint)
 	return svc, pool, reportRepo, taskRepo
 }
 

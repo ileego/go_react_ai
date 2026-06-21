@@ -12,9 +12,24 @@ type Config struct {
 	Database   DatabaseConfig
 	Redis      RedisConfig
 	MinIO      MinIOConfig
+	Cache      CacheConfig
 	AI         AIConfig
 	Auth       AuthConfig
 	WorkerPool WorkerPoolConfig
+}
+
+// CacheConfig 缓存配置。
+type CacheConfig struct {
+	DefaultTTLSeconds int    `mapstructure:"CACHE_DEFAULT_TTL_SECONDS"`
+	Prefix            string `mapstructure:"CACHE_PREFIX"`
+}
+
+// DefaultTTL 返回默认缓存 TTL。
+func (c CacheConfig) DefaultTTL() time.Duration {
+	if c.DefaultTTLSeconds <= 0 {
+		return 5 * time.Minute
+	}
+	return time.Duration(c.DefaultTTLSeconds) * time.Second
 }
 
 type ServerConfig struct {
@@ -142,6 +157,8 @@ func Load() *Config {
 	v.SetDefault("MINIO_SECRET_KEY", "minioadmin")
 	v.SetDefault("MINIO_BUCKET", "goai-files")
 	v.SetDefault("MINIO_USE_SSL", false)
+	v.SetDefault("CACHE_DEFAULT_TTL_SECONDS", 300)
+	v.SetDefault("CACHE_PREFIX", "goai")
 	v.SetDefault("AI_PROVIDER", "openai")
 	v.SetDefault("AI_TIMEOUT_SECONDS", 30)
 	v.SetDefault("AI_MAX_RETRIES", 3)
@@ -180,6 +197,10 @@ func Load() *Config {
 			SecretKey: v.GetString("MINIO_SECRET_KEY"),
 			Bucket:    v.GetString("MINIO_BUCKET"),
 			UseSSL:    v.GetBool("MINIO_USE_SSL"),
+		},
+		Cache: CacheConfig{
+			DefaultTTLSeconds: v.GetInt("CACHE_DEFAULT_TTL_SECONDS"),
+			Prefix:            v.GetString("CACHE_PREFIX"),
 		},
 		AI: AIConfig{
 			Provider:   v.GetString("AI_PROVIDER"),

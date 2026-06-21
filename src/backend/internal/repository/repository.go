@@ -45,3 +45,16 @@ type AgentTaskRepository interface {
 	UpdateResult(ctx context.Context, id int64, output string, costMs int64) error
 	UpdateStatus(ctx context.Context, id int64, status string) error
 }
+
+// SearchRepository 全文搜索数据访问接口。
+type SearchRepository interface {
+	SearchReports(ctx context.Context, userID int64, query string, limit, offset int) ([]*domain.Report, int, error)
+}
+
+// FileRepository 文件元数据访问接口。
+type FileRepository interface {
+	GetByID(ctx context.Context, id int64) (*domain.File, error)
+	Create(ctx context.Context, file *domain.File) error
+	Delete(ctx context.Context, id int64) error
+	ListByUser(ctx context.Context, userID int64, limit, offset int) ([]*domain.File, error)
+}

@@ -34,10 +34,34 @@ type ReportService interface {
 	ListByUser(ctx context.Context, userID int64, page, pageSize int) ([]*domain.Report, int, error)
 	// Cancel 取消正在进行的报告
 	Cancel(ctx context.Context, id int64) error
+	// UpdateStatus 更新报告状态（内部使用，会失效缓存）
+	UpdateStatus(ctx context.Context, id int64, status domain.ReportStatus) error
 }
 
 // AgentService 智能体调度业务逻辑接口
 type AgentService interface {
 	// Dispatch 派发报告生成任务给智能体流水线
 	Dispatch(ctx context.Context, reportID int64) error
+}
+
+// SearchService 搜索业务逻辑接口
+type SearchService interface {
+	// SearchReports 搜索当前用户的报告
+	SearchReports(ctx context.Context, userID int64, query string, page, pageSize int) ([]*domain.Report, int, error)
+}
+
+// FileService 文件存储业务逻辑接口
+type FileService interface {
+	// Upload 上传文件并保存元数据
+	Upload(ctx context.Context, userID int64, name, contentType string, data []byte) (*domain.File, error)
+	// GetByID 获取文件元数据
+	GetByID(ctx context.Context, id int64) (*domain.File, error)
+	// GetDownloadURL 获取临时下载 URL
+	GetDownloadURL(ctx context.Context, id int64) (string, error)
+	// Delete 删除文件及其元数据
+	Delete(ctx context.Context, id int64) error
+	// ListByUser 获取用户的文件列表
+	ListByUser(ctx context.Context, userID int64, page, pageSize int) ([]*domain.File, int, error)
+	// PresignedUploadURL 获取客户端直传的预签名上传 URL
+	PresignedUploadURL(ctx context.Context, userID int64, name, contentType string) (string, *domain.File, error)
 }
