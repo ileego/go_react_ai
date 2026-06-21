@@ -72,6 +72,16 @@ type AIConfig struct {
 	Model      string `mapstructure:"AI_MODEL"`
 	TimeoutSec int    `mapstructure:"AI_TIMEOUT_SECONDS"`
 	MaxRetries int    `mapstructure:"AI_MAX_RETRIES"`
+
+	// 各 Provider 专用配置，优先于通用 APIKey/BaseURL。
+	OpenAIAPIKey     string `mapstructure:"OPENAI_API_KEY"`
+	OpenAIBaseURL    string `mapstructure:"OPENAI_BASE_URL"`
+	AnthropicAPIKey  string `mapstructure:"ANTHROPIC_API_KEY"`
+	AnthropicBaseURL string `mapstructure:"ANTHROPIC_BASE_URL"`
+	DeepSeekAPIKey   string `mapstructure:"DEEPSEEK_API_KEY"`
+	DeepSeekBaseURL  string `mapstructure:"DEEPSEEK_BASE_URL"`
+	KimiAPIKey       string `mapstructure:"KIMI_API_KEY"`
+	KimiBaseURL      string `mapstructure:"KIMI_BASE_URL"`
 }
 
 func (a AIConfig) APITimeout() time.Duration {
@@ -209,6 +219,15 @@ func Load() *Config {
 			Model:      v.GetString("AI_MODEL"),
 			TimeoutSec: v.GetInt("AI_TIMEOUT_SECONDS"),
 			MaxRetries: v.GetInt("AI_MAX_RETRIES"),
+
+			OpenAIAPIKey:     v.GetString("OPENAI_API_KEY"),
+			OpenAIBaseURL:    v.GetString("OPENAI_BASE_URL"),
+			AnthropicAPIKey:  v.GetString("ANTHROPIC_API_KEY"),
+			AnthropicBaseURL: v.GetString("ANTHROPIC_BASE_URL"),
+			DeepSeekAPIKey:   v.GetString("DEEPSEEK_API_KEY"),
+			DeepSeekBaseURL:  v.GetString("DEEPSEEK_BASE_URL"),
+			KimiAPIKey:       v.GetString("KIMI_API_KEY"),
+			KimiBaseURL:      v.GetString("KIMI_BASE_URL"),
 		},
 		Auth: AuthConfig{
 			JWTSecret:             v.GetString("JWT_SECRET"),

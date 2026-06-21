@@ -117,12 +117,30 @@ func (c *Client) Do(req *http.Request) (*http.Response, error) {
 
 // PostJSON 发送 POST JSON 请求。
 func (c *Client) PostJSON(ctx context.Context, url string, body []byte) (*http.Response, error) {
+	return c.PostJSONWithHeaders(ctx, url, body, nil)
+}
+
+// PostJSONWithHeaders 发送带自定义请求头的 POST JSON 请求。
+func (c *Client) PostJSONWithHeaders(ctx context.Context, url string, body []byte, headers map[string]string) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 	return c.Do(req)
+}
+
+// DoStream 执行 HTTP 请求并返回响应，不读取响应体，不重试，不设置全局超时。
+// 调用方必须通过 context 控制生命周期，并在读取完毕后关闭 resp.Body。
+func (c *Client) DoStream(req *http.Request) (*http.Response, error) {
+	// 流式请求使用无全局超时的客户端，由 context 控制；同时跳过重试，避免在读到一半时重试。
+	streamClient := &http.Client{
+		Transport: c.base.Transport,
+	}
+	return streamClient.Do(req)
 }
 
 // readBody 读取请求 Body 并在读取后还原，便于重试时复用。
