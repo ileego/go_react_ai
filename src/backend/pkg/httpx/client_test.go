@@ -155,6 +155,52 @@ func TestClient_PostJSON(t *testing.T) {
 	defer func() { _ = resp.Body.Close() }()
 }
 
+func TestClient_PostJSONWithHeaders(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if auth := r.Header.Get("Authorization"); auth != "Bearer test-key" {
+			t.Errorf("expected auth header, got %q", auth)
+		}
+		if ct := r.Header.Get("Content-Type"); ct != "application/json" {
+			t.Errorf("expected application/json, got %s", ct)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	client := NewClient(5*time.Second, DefaultRetryConfig())
+	resp, err := client.PostJSONWithHeaders(context.Background(), server.URL, []byte(`{}`), map[string]string{
+		"Authorization": "Bearer test-key",
+	})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+}
+
+func TestClient_DoStream(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`data: hello`))
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+	}))
+	defer server.Close()
+
+	client := NewClient(5*time.Second, DefaultRetryConfig())
+	req, _ := http.NewRequest(http.MethodGet, server.URL, nil)
+	resp, err := client.DoStream(req)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	body, _ := io.ReadAll(resp.Body)
+	if string(body) != "data: hello" {
+		t.Errorf("unexpected body: %s", string(body))
+	}
+}
+
 func TestBackoff(t *testing.T) {
 	tests := []struct {
 		attempt int
