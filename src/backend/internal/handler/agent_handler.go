@@ -19,11 +19,11 @@ func NewAgentHandler(svc service.AgentService) *AgentHandler {
 }
 
 // Dispatch 派发报告生成任务
-// POST /api/reports/:report_id/dispatch
+// POST /api/reports/:id/dispatch
 func (h *AgentHandler) Dispatch(c *gin.Context) {
-	reportID, err := strconv.ParseInt(c.Param("report_id"), 10, 64)
+	reportID, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		response.BadRequest(c, "invalid report_id")
+		response.BadRequest(c, "invalid id")
 		return
 	}
 
