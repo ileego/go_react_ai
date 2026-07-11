@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
+import { fetchJson } from '@/shared/api/client'
 import type { CreateReportRequest, Report } from '../types'
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+interface ListResponse {
+  list: Report[]
+  total: number
+  page: number
+  page_size: number
+}
 
 export function useReports() {
   const [reports, setReports] = useState<Report[]>([])
@@ -12,10 +18,8 @@ export function useReports() {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch(`${API_BASE}/reports`)
-      if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      const data = await res.json()
-      setReports(data.data || [])
+      const data = await fetchJson<ListResponse>('/reports')
+      setReports(data.list || [])
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error')
     } finally {
@@ -24,13 +28,12 @@ export function useReports() {
   }, [])
 
   const createReport = useCallback(async (req: CreateReportRequest) => {
-    const res = await fetch(`${API_BASE}/reports`, {
+    const report = await fetchJson<Report>('/reports', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(req),
     })
-    if (!res.ok) throw new Error(`HTTP ${res.status}`)
-    return res.json()
+    setReports((prev) => [report, ...prev])
+    return report
   }, [])
 
   useEffect(() => {

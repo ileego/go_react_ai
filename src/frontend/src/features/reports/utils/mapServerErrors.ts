@@ -7,7 +7,7 @@ interface ServerError {
 
 export function mapServerErrors<T extends FieldValues>(
   errors: ServerError[],
-  setError: UseFormSetError<T>,
+  setError: UseFormSetError<T>
 ) {
   for (const err of errors) {
     setError(err.field as Path<T>, {

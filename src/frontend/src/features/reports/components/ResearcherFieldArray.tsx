@@ -12,7 +12,7 @@ const schema = z.object({
         role: z.enum(['lead', 'analyst', 'writer'], {
           errorMap: () => ({ message: '请选择角色' }),
         }),
-      }),
+      })
     )
     .min(1, '至少需要一名研究员'),
 })
@@ -37,11 +37,7 @@ export function ResearcherFieldArray() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <input
-        {...register('title')}
-        placeholder="报告标题"
-        className="w-full rounded border p-2"
-      />
+      <input {...register('title')} placeholder="报告标题" className="w-full rounded border p-2" />
 
       <div className="space-y-2">
         <h4>研究员列表</h4>
@@ -52,10 +48,7 @@ export function ResearcherFieldArray() {
               placeholder="姓名"
               className="rounded border p-2"
             />
-            <select
-              {...register(`researchers.${index}.role`)}
-              className="rounded border p-2"
-            >
+            <select {...register(`researchers.${index}.role`)} className="rounded border p-2">
               <option value="lead">负责人</option>
               <option value="analyst">分析师</option>
               <option value="writer">写手</option>
@@ -75,9 +68,7 @@ export function ResearcherFieldArray() {
       </div>
 
       {formState.errors.researchers?.root && (
-        <p className="text-red-500">
-          {formState.errors.researchers.root.message}
-        </p>
+        <p className="text-red-500">{formState.errors.researchers.root.message}</p>
       )}
 
       <Button type="submit">提交</Button>

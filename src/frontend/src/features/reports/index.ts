@@ -7,8 +7,16 @@ export { ReportCard } from './components/ReportCard'
 export { useReports } from './hooks/useReports'
 export type { Report, ReportStatus } from './types'
 
+// 第17章路由与导航教学示例
+export { ReportsPageWithLoader } from './pages/ReportsPageWithLoader'
+export { ReportCenterLayout } from './pages/ReportCenterLayout'
+export { ReportsPage } from './pages/ReportsPage'
+export { CreateReportPage } from './pages/CreateReportPage'
+export { ReportDetailPage } from './pages/ReportDetailPage'
+export { ReportDetail } from './components/ReportDetail'
+export { ReportSearch } from './components/ReportSearch'
+
 // 第16章表单与校验教学示例
-export { ControlledTopicInput } from './components/ControlledTopicInput'
 export { UncontrolledTopicInput } from './components/UncontrolledTopicInput'
 export { ActionForm } from './components/ActionForm'
 export { BasicRHFReportForm } from './components/BasicRHFReportForm'

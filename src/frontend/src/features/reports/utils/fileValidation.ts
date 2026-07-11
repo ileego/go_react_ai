@@ -4,10 +4,7 @@ export interface FileValidationOptions {
   maxCount?: number
 }
 
-export function validateFiles(
-  files: File[],
-  options: FileValidationOptions,
-): string | null {
+export function validateFiles(files: File[], options: FileValidationOptions): string | null {
   if (options.maxCount && files.length > options.maxCount) {
     return `最多上传 ${options.maxCount} 个文件`
   }

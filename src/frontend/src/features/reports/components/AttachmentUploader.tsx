@@ -1,9 +1,4 @@
-import {
-  useState,
-  useCallback,
-  useEffect,
-  type ChangeEvent,
-} from 'react'
+import { useState, useCallback, useEffect, type ChangeEvent } from 'react'
 import { Button } from '@/shared/components/Button'
 
 export interface Attachment {
@@ -30,10 +25,7 @@ function generateId() {
   return Math.random().toString(36).slice(2)
 }
 
-export function AttachmentUploader({
-  value = [],
-  onChange,
-}: AttachmentUploaderProps) {
+export function AttachmentUploader({ value = [], onChange }: AttachmentUploaderProps) {
   const [queue, setQueue] = useState<UploadFile[]>([])
   const [isDragging, setIsDragging] = useState(false)
 
@@ -64,7 +56,7 @@ export function AttachmentUploader({
         .map((f) => f.attachment!)
       onChange(attachments)
     },
-    [onChange],
+    [onChange]
   )
 
   const addFiles = useCallback(
@@ -75,28 +67,21 @@ export function AttachmentUploader({
         file,
         status: 'pending',
         progress: 0,
-        previewUrl: file.type.startsWith('image/')
-          ? URL.createObjectURL(file)
-          : undefined,
+        previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
       }))
       setQueue((prev) => [...prev, ...newFiles])
     },
-    [setQueue],
+    [setQueue]
   )
 
   const startUpload = useCallback(async () => {
     for (const item of queue) {
       if (item.status !== 'pending') continue
-      setQueue((prev) =>
-        prev.map((f) =>
-          f.id === item.id ? { ...f, status: 'uploading' } : f),
-      )
+      setQueue((prev) => prev.map((f) => (f.id === item.id ? { ...f, status: 'uploading' } : f)))
 
       for (let progress = 0; progress <= 100; progress += 20) {
         await new Promise((resolve) => setTimeout(resolve, 200))
-        setQueue((prev) =>
-          prev.map((f) => (f.id === item.id ? { ...f, progress } : f)),
-        )
+        setQueue((prev) => prev.map((f) => (f.id === item.id ? { ...f, progress } : f)))
       }
 
       const attachment: Attachment = {
@@ -106,10 +91,9 @@ export function AttachmentUploader({
       }
 
       setQueue((prev): UploadFile[] => {
-        const next = prev.map((f): UploadFile =>
-          f.id === item.id
-            ? { ...f, status: 'done', progress: 100, attachment }
-            : f,
+        const next = prev.map(
+          (f): UploadFile =>
+            f.id === item.id ? { ...f, status: 'done', progress: 100, attachment } : f
         )
         notifyChange(next)
         return next
@@ -127,7 +111,7 @@ export function AttachmentUploader({
         return next
       })
     },
-    [notifyChange],
+    [notifyChange]
   )
 
   return (
@@ -153,19 +137,14 @@ export function AttachmentUploader({
         <input
           type="file"
           multiple
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            addFiles(e.target.files)
-          }
+          onChange={(e: ChangeEvent<HTMLInputElement>) => addFiles(e.target.files)}
         />
         <p className="text-sm text-gray-500">支持拖拽上传多个附件</p>
       </div>
 
       <ul className="space-y-2">
         {queue.map((item) => (
-          <li
-            key={item.id}
-            className="flex items-center gap-3 rounded border p-2"
-          >
+          <li key={item.id} className="flex items-center gap-3 rounded border p-2">
             {item.previewUrl && (
               <img
                 src={item.previewUrl}
@@ -176,10 +155,7 @@ export function AttachmentUploader({
             <div className="flex-1">
               <p className="text-sm font-medium">{item.file.name}</p>
               <div className="h-2 w-full rounded bg-gray-200">
-                <div
-                  className="h-2 rounded bg-blue-500"
-                  style={{ width: `${item.progress}%` }}
-                />
+                <div className="h-2 rounded bg-blue-500" style={{ width: `${item.progress}%` }} />
               </div>
               <p className="text-xs text-gray-500">
                 {item.status === 'done'
@@ -189,11 +165,7 @@ export function AttachmentUploader({
                     : '等待上传'}
               </p>
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => removeFile(item.id)}
-            >
+            <Button type="button" variant="outline" onClick={() => removeFile(item.id)}>
               删除
             </Button>
           </li>

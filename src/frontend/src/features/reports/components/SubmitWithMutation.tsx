@@ -1,16 +1,18 @@
 import { useForm } from 'react-hook-form'
 import { useMutation } from '@tanstack/react-query'
+import { fetchJson } from '@/shared/api/client'
 import { useDebouncedSubmit } from '../hooks/useDebouncedSubmit'
 import type { ReportFormData } from '../schemas/reportSchema'
+import type { Report } from '../types'
 
 async function createReport(data: ReportFormData) {
-  const res = await fetch('/api/reports', {
+  return fetchJson<Report>('/reports', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      title: data.title,
+      topic: data.topic,
+    }),
   })
-  if (!res.ok) throw new Error('创建失败')
-  return res.json()
 }
 
 export function SubmitWithMutation() {
@@ -18,16 +20,12 @@ export function SubmitWithMutation() {
   const mutation = useMutation({ mutationFn: createReport })
   const onSubmit = useDebouncedSubmit(
     async (data: ReportFormData) => mutation.mutateAsync(data),
-    800,
+    800
   )
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
-      <input
-        {...register('title')}
-        placeholder="报告标题"
-        className="w-full rounded border p-2"
-      />
+      <input {...register('title')} placeholder="报告标题" className="w-full rounded border p-2" />
       <button
         type="submit"
         disabled={mutation.isPending}
@@ -35,9 +33,7 @@ export function SubmitWithMutation() {
       >
         {mutation.isPending ? '提交中...' : '提交'}
       </button>
-      {mutation.isError && (
-        <p className="text-red-500">创建失败，请重试</p>
-      )}
+      {mutation.isError && <p className="text-red-500">创建失败，请重试</p>}
     </form>
   )
 }

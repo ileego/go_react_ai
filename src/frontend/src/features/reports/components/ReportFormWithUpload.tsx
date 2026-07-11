@@ -1,8 +1,5 @@
 import { useForm, Controller } from 'react-hook-form'
-import {
-  AttachmentUploader,
-  type Attachment,
-} from './AttachmentUploader'
+import { AttachmentUploader, type Attachment } from './AttachmentUploader'
 
 interface ReportWithAttachmentsForm {
   title: string
@@ -24,29 +21,17 @@ export function ReportFormWithUpload() {
         name="title"
         control={control}
         render={({ field }) => (
-          <input
-            {...field}
-            placeholder="报告标题"
-            className="w-full rounded border p-2"
-          />
+          <input {...field} placeholder="报告标题" className="w-full rounded border p-2" />
         )}
       />
 
       <Controller
         name="attachments"
         control={control}
-        render={({ field }) => (
-          <AttachmentUploader
-            value={field.value}
-            onChange={field.onChange}
-          />
-        )}
+        render={({ field }) => <AttachmentUploader value={field.value} onChange={field.onChange} />}
       />
 
-      <button
-        type="submit"
-        className="rounded bg-blue-600 px-4 py-2 text-white"
-      >
+      <button type="submit" className="rounded bg-blue-600 px-4 py-2 text-white">
         提交
       </button>
     </form>

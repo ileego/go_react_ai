@@ -14,20 +14,16 @@ interface CreateReportFormProps {
   isLoading?: boolean
 }
 
-export function CreateReportForm({
-  onSubmit,
-  isLoading,
-}: CreateReportFormProps) {
-  const { register, handleSubmit, control, formState } =
-    useForm<CreateReportFormValues>({
-      defaultValues: {
-        title: '',
-        topic: '',
-        depth: 'medium',
-        model: 'kimi-latest',
-        description: '',
-      },
-    })
+export function CreateReportForm({ onSubmit, isLoading }: CreateReportFormProps) {
+  const { register, handleSubmit, control, formState } = useForm<CreateReportFormValues>({
+    defaultValues: {
+      title: '',
+      topic: '',
+      depth: 'medium',
+      model: 'kimi-latest',
+      description: '',
+    },
+  })
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -40,9 +36,7 @@ export function CreateReportForm({
           className="w-full rounded border p-2"
         />
         {formState.errors.title && (
-          <p className="text-sm text-red-500">
-            {formState.errors.title.message}
-          </p>
+          <p className="text-sm text-red-500">{formState.errors.title.message}</p>
         )}
       </div>
 
@@ -58,11 +52,7 @@ export function CreateReportForm({
 
       <div>
         <label htmlFor="depth">研究深度</label>
-        <select
-          id="depth"
-          {...register('depth')}
-          className="w-full rounded border p-2"
-        >
+        <select id="depth" {...register('depth')} className="w-full rounded border p-2">
           <option value="shallow">浅度概览</option>
           <option value="medium">中度分析</option>
           <option value="deep">深度研究</option>

@@ -19,12 +19,7 @@ export function WatchAndController() {
         <option value="medium">中度</option>
         <option value="deep">深度</option>
       </select>
-      {depth === 'deep' && (
-        <input
-          placeholder="详细章节数"
-          className="w-full rounded border p-2"
-        />
-      )}
+      {depth === 'deep' && <input placeholder="详细章节数" className="w-full rounded border p-2" />}
 
       <Controller
         name="model"

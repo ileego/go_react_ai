@@ -16,7 +16,7 @@ export const reportSchemaRefined = z
     {
       message: '选择自定义时间范围时，必须填写开始和结束日期',
       path: ['startDate'],
-    },
+    }
   )
   .refine(
     (data) => {
@@ -26,7 +26,7 @@ export const reportSchemaRefined = z
     {
       message: '结束日期必须晚于开始日期',
       path: ['endDate'],
-    },
+    }
   )
 
 export type RefinedReportFormData = z.infer<typeof reportSchemaRefined>

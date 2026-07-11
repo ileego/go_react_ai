@@ -8,7 +8,7 @@ interface ActionState {
 
 async function createReportAction(
   _prevState: ActionState | null,
-  formData: FormData,
+  formData: FormData
 ): Promise<ActionState> {
   const topic = formData.get('topic') as string
   const depth = formData.get('depth') as string
@@ -17,10 +17,7 @@ async function createReportAction(
 }
 
 export function ActionForm() {
-  const [state, submitAction, isPending] = useActionState(
-    createReportAction,
-    null,
-  )
+  const [state, submitAction, isPending] = useActionState(createReportAction, null)
 
   return (
     <form action={submitAction} className="space-y-4">
@@ -31,11 +28,7 @@ export function ActionForm() {
         required
         className="w-full rounded border p-2"
       />
-      <select
-        name="depth"
-        defaultValue="medium"
-        className="w-full rounded border p-2"
-      >
+      <select name="depth" defaultValue="medium" className="w-full rounded border p-2">
         <option value="shallow">浅度</option>
         <option value="medium">中度</option>
         <option value="deep">深度</option>
@@ -43,9 +36,7 @@ export function ActionForm() {
       <Button type="submit" disabled={isPending}>
         {isPending ? '提交中...' : '创建报告'}
       </Button>
-      {state?.message && (
-        <p className="text-sm text-green-600">{state.message}</p>
-      )}
+      {state?.message && <p className="text-sm text-green-600">{state.message}</p>}
     </form>
   )
 }

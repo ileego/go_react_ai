@@ -5,10 +5,7 @@ import { Button } from '@/shared/components/Button'
 
 const taskSchema = z
   .object({
-    title: z
-      .string()
-      .min(2, '标题至少 2 个字符')
-      .max(100, '标题最多 100 个字符'),
+    title: z.string().min(2, '标题至少 2 个字符').max(100, '标题最多 100 个字符'),
     topic: z.string().min(1, '请输入研究主题'),
     mode: z.enum(['quick', 'standard', 'deep'], {
       errorMap: () => ({ message: '请选择研究模式' }),
@@ -23,7 +20,7 @@ const taskSchema = z
           role: z.enum(['lead', 'analyst', 'writer'], {
             errorMap: () => ({ message: '请选择角色' }),
           }),
-        }),
+        })
       )
       .min(1, '至少需要一名研究员'),
     model: z.enum(['gpt-4o', 'claude-3-5', 'kimi-latest'], {
@@ -35,14 +32,14 @@ const taskSchema = z
       if (!data.hasCustomRange) return true
       return !!data.startDate && !!data.endDate
     },
-    { message: '请填写完整的时间范围', path: ['startDate'] },
+    { message: '请填写完整的时间范围', path: ['startDate'] }
   )
   .refine(
     (data) => {
       if (!data.startDate || !data.endDate) return true
       return new Date(data.startDate) < new Date(data.endDate)
     },
-    { message: '结束日期必须晚于开始日期', path: ['endDate'] },
+    { message: '结束日期必须晚于开始日期', path: ['endDate'] }
   )
 
 export type CreateTaskFormData = z.infer<typeof taskSchema>
@@ -52,10 +49,7 @@ interface CreateResearchTaskFormProps {
   isLoading?: boolean
 }
 
-export function CreateResearchTaskForm({
-  onSubmit,
-  isLoading,
-}: CreateResearchTaskFormProps) {
+export function CreateResearchTaskForm({ onSubmit, isLoading }: CreateResearchTaskFormProps) {
   const {
     register,
     control,
@@ -85,42 +79,24 @@ export function CreateResearchTaskForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div>
         <label htmlFor="title">任务标题</label>
-        <input
-          id="title"
-          {...register('title')}
-          className="w-full rounded border p-2"
-        />
-        {errors.title && (
-          <p className="text-sm text-red-500">{errors.title.message}</p>
-        )}
+        <input id="title" {...register('title')} className="w-full rounded border p-2" />
+        {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
       </div>
 
       <div>
         <label htmlFor="topic">研究主题</label>
-        <input
-          id="topic"
-          {...register('topic')}
-          className="w-full rounded border p-2"
-        />
-        {errors.topic && (
-          <p className="text-sm text-red-500">{errors.topic.message}</p>
-        )}
+        <input id="topic" {...register('topic')} className="w-full rounded border p-2" />
+        {errors.topic && <p className="text-sm text-red-500">{errors.topic.message}</p>}
       </div>
 
       <div>
         <label htmlFor="mode">研究模式</label>
-        <select
-          id="mode"
-          {...register('mode')}
-          className="w-full rounded border p-2"
-        >
+        <select id="mode" {...register('mode')} className="w-full rounded border p-2">
           <option value="quick">快速调研</option>
           <option value="standard">标准研究</option>
           <option value="deep">深度研究</option>
         </select>
-        {errors.mode && (
-          <p className="text-sm text-red-500">{errors.mode.message}</p>
-        )}
+        {errors.mode && <p className="text-sm text-red-500">{errors.mode.message}</p>}
       </div>
 
       <div>
@@ -130,24 +106,12 @@ export function CreateResearchTaskForm({
         </label>
         {hasCustomRange && (
           <div className="mt-2 flex gap-2">
-            <input
-              type="date"
-              {...register('startDate')}
-              className="rounded border p-2"
-            />
-            <input
-              type="date"
-              {...register('endDate')}
-              className="rounded border p-2"
-            />
+            <input type="date" {...register('startDate')} className="rounded border p-2" />
+            <input type="date" {...register('endDate')} className="rounded border p-2" />
           </div>
         )}
-        {errors.startDate && (
-          <p className="text-sm text-red-500">{errors.startDate.message}</p>
-        )}
-        {errors.endDate && (
-          <p className="text-sm text-red-500">{errors.endDate.message}</p>
-        )}
+        {errors.startDate && <p className="text-sm text-red-500">{errors.startDate.message}</p>}
+        {errors.endDate && <p className="text-sm text-red-500">{errors.endDate.message}</p>}
       </div>
 
       <div>
@@ -159,19 +123,12 @@ export function CreateResearchTaskForm({
               placeholder="姓名"
               className="rounded border p-2"
             />
-            <select
-              {...register(`researchers.${index}.role`)}
-              className="rounded border p-2"
-            >
+            <select {...register(`researchers.${index}.role`)} className="rounded border p-2">
               <option value="lead">负责人</option>
               <option value="analyst">分析师</option>
               <option value="writer">写手</option>
             </select>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => remove(index)}
-            >
+            <Button type="button" variant="outline" onClick={() => remove(index)}>
               删除
             </Button>
           </div>
@@ -184,9 +141,7 @@ export function CreateResearchTaskForm({
           添加研究员
         </Button>
         {errors.researchers?.root && (
-          <p className="text-sm text-red-500">
-            {errors.researchers.root.message}
-          </p>
+          <p className="text-sm text-red-500">{errors.researchers.root.message}</p>
         )}
       </div>
 
@@ -208,9 +163,7 @@ export function CreateResearchTaskForm({
             </select>
           )}
         />
-        {errors.model && (
-          <p className="text-sm text-red-500">{errors.model.message}</p>
-        )}
+        {errors.model && <p className="text-sm text-red-500">{errors.model.message}</p>}
       </div>
 
       <Button type="submit" disabled={isLoading}>

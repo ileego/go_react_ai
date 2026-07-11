@@ -31,9 +31,7 @@ export function CreateReportFormValidated() {
           placeholder="报告标题"
           className="w-full rounded border p-2"
         />
-        {errors.title && (
-          <p className="text-red-500">{errors.title.message}</p>
-        )}
+        {errors.title && <p className="text-red-500">{errors.title.message}</p>}
       </div>
 
       <div>
@@ -42,9 +40,7 @@ export function CreateReportFormValidated() {
           placeholder="研究主题"
           className="w-full rounded border p-2"
         />
-        {errors.topic && (
-          <p className="text-red-500">{errors.topic.message}</p>
-        )}
+        {errors.topic && <p className="text-red-500">{errors.topic.message}</p>}
       </div>
 
       <Button type="submit">提交</Button>

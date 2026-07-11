@@ -40,16 +40,8 @@ export function AutoSaveDraftForm() {
 
   return (
     <form className="space-y-4">
-      <input
-        {...register('title')}
-        placeholder="标题"
-        className="w-full rounded border p-2"
-      />
-      <input
-        {...register('topic')}
-        placeholder="主题"
-        className="w-full rounded border p-2"
-      />
+      <input {...register('title')} placeholder="标题" className="w-full rounded border p-2" />
+      <input {...register('topic')} placeholder="主题" className="w-full rounded border p-2" />
       <textarea
         {...register('description')}
         placeholder="描述"
