@@ -43,3 +43,7 @@ Thumbs.db
 # 前端构建产物
 src/frontend/dist/
 src/frontend/dist-ssr/
+
+# Claude / CodeGraph
+.claude/
+.codegraph/
