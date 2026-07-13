@@ -1,7 +1,7 @@
 export function TokenCard() {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">设计令牌示例</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-slate-100">TokenCard</h3>
       <p className="mt-2 text-gray-600 dark:text-gray-300">
         这张卡片使用了品牌色、自定义圆角、阴影与间距令牌。
       </p>
