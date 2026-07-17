@@ -1,12 +1,13 @@
 import { useDarkMode } from '@/shared/hooks/useDarkMode'
-import { Button } from './Button'
+import { Button } from '@/components/ui/button'
+import { Moon, Sun } from 'lucide-react'
 
 export function ThemeToggle() {
   const { isDark, toggle } = useDarkMode()
 
   return (
-    <Button variant="outline" onClick={toggle} aria-label="切换主题">
-      {isDark ? '深色' : '浅色'}
+    <Button variant="outline" size="icon" onClick={toggle} aria-label="切换主题">
+      {isDark ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
     </Button>
   )
 }

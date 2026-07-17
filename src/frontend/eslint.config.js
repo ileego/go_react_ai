@@ -32,5 +32,12 @@ export default tseslint.config(
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
     },
+  },
+  {
+    files: ['src/components/ui/**/*.{ts,tsx}'],
+    rules: {
+      // Shadcn UI 组件需要导出 cva 变体配置和 hooks，关闭该规则
+      'react-refresh/only-export-components': 'off',
+    },
   }
 )

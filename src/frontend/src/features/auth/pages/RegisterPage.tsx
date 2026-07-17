@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { Button } from '@/shared/components/Button'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -25,60 +29,66 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto my-8 max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-card dark:border-slate-700 dark:bg-slate-800">
-      <h1 className="text-xl font-bold">注册</h1>
+    <Card className="mx-auto my-8 max-w-md">
+      <CardHeader>
+        <CardTitle>注册</CardTitle>
+        <CardDescription>创建新账号以使用全部功能</CardDescription>
+      </CardHeader>
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-        <div>
-          <label htmlFor="nickname">昵称</label>
-          <input
-            id="nickname"
-            type="text"
-            value={nickname}
-            onChange={(e) => setNickname(e.target.value)}
-            className="w-full rounded border border-gray-300 p-2 dark:border-slate-600 dark:bg-slate-800"
-            required
-          />
-        </div>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="nickname">昵称</Label>
+            <Input
+              id="nickname"
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              required
+            />
+          </div>
 
-        <div>
-          <label htmlFor="email">邮箱</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full rounded border border-gray-300 p-2 dark:border-slate-600 dark:bg-slate-800"
-            required
-          />
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="email">邮箱</Label>
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-        <div>
-          <label htmlFor="password">密码</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded border border-gray-300 p-2 dark:border-slate-600 dark:bg-slate-800"
-            required
-          />
-          <p className="mt-1 text-xs text-gray-500">至少 8 位，包含大小写字母和数字</p>
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">密码</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <p className="text-xs text-muted-foreground">至少 8 位，包含大小写字母和数字</p>
+          </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? '注册中...' : '注册'}
-        </Button>
-      </form>
+          <Button type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? '注册中...' : '注册'}
+          </Button>
+        </form>
 
-      <p className="mt-4 text-sm">
-        已有账号？{' '}
-        <Link to="/login" className="text-brand-600 hover:underline">
-          去登录
-        </Link>
-      </p>
-    </div>
+        <p className="mt-4 text-sm text-muted-foreground">
+          已有账号？{' '}
+          <Link to="/login" className="text-primary hover:underline">
+            去登录
+          </Link>
+        </p>
+      </CardContent>
+    </Card>
   )
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { CreateReportForm } from '../components/CreateReportFormRHF'
 import { useReports } from '../hooks/useReports'
 import type { CreateReportFormValues } from '../components/CreateReportFormRHF'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export function CreateReportPage() {
   const navigate = useNavigate()
@@ -29,7 +30,11 @@ export function CreateReportPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <h1 className="text-2xl font-bold">新建报告</h1>
-      {error && <p className="text-red-600">{error}</p>}
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       <CreateReportForm onSubmit={handleSubmit} isLoading={isLoading} />
     </div>
   )
